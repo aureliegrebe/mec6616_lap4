@@ -100,10 +100,10 @@ class Solver_2D:
         else:
             self.source = None
 
-        # if self.vec_func is not None:
-        #     self.set_vec_field()
-        # else:
-        #     self.scalar = None
+        if self.velocity_func is not None:
+             self.set_velocity_field()
+        else:
+            self.velocity = None
 
         if bc_list:
             if len(bc_list) != self.mesh.number_of_boundaries:
@@ -163,6 +163,7 @@ class Solver_2D:
         if self.source is None:
             return
         B += self.source * self.areas
+        
 
     def set_diff(self, B, first_iter: bool) -> None:
         diff_cnsts = self.therm_cond/self.p_nksi*self.face_size/self.d_ksi
@@ -200,7 +201,7 @@ class Solver_2D:
                 B[idx_d] += -cross_diff[idx_f]
     
     def set_conv(self, B, first_iter:bool) -> None:
-        conv_cnsts = self.density * np.dot(self.normal, self.velocity_func) * self.face_size
+        conv_cnsts = self.density * np.sum(self.normal * self.velocity, axis=1) * self.face_size
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             # Coefficients pour les cellules aux frontières
             if idx_f < self.mesh.number_of_boundary_faces:
@@ -249,7 +250,7 @@ class Solver_2D:
         # self.calculate_centres()
         nb_elem = self.mesh.number_of_elements
         B = np.zeros(nb_elem) # On ré-initialise B à chaque itération
-
+        
         if first_iter:
             self.A = np.zeros((nb_elem, nb_elem))
     
@@ -328,8 +329,7 @@ class Solver_2D:
         Paramètres
         ----------
         scalar_func: Callable[[float, float], float]
-            fonction f(x, y) qui défini le champ scalaire utilisé dans le calcul du
-            gradient.
+            fonction f(x, y) qui défini le champ scalaire utilisé comme terme source
 
         Retourne
         --------
@@ -341,7 +341,7 @@ class Solver_2D:
 
         self.grad = None # Pourquoi le mettre ici ? C'est déja dans solve
 
-    def set_vec_field(self, 
+    def set_velocity_field(self, 
                       func: Optional[Callable[[float, float],(float, float)]] = None
                       ) -> None:
         """
@@ -350,16 +350,16 @@ class Solver_2D:
         Paramètres
         ----------
         scalar_func: Callable[[float, float], float]
-            fonction f(x, y) qui défini le champ scalaire utilisé dans le calcul du
-            gradient.
+            fonction f(x, y) qui défini le champ scalaire utilisé comme champ de vitesses
 
         Retourne
         --------
         None
         """
         if func is not None:
-            self.vec_func = func
-        self.vec = np.array([self.vec_func(x, y) for (x, y) in self.centres])
+            self.velocity_func = func
+        centres_faces = (self.faces_start + self.faces_end) / 2
+        self.velocity = np.array([self.velocity_func(x, y) for (x, y) in centres_faces]) 
 
         # Reset gradient as it is no longer valid
         self.grad = None
@@ -553,7 +553,8 @@ if __name__ == "__main__":
     ]
     
     source = lambda x, y: 1e6
-    solver = Solver_2D(mesh_obj, 0.5, bc_list, source)    
+    velocity = lambda x, y: (10 *x ,2 * y)
+    solver = Solver_2D(mesh_obj, 0.5, 1000, "UPWIND", bc_list, source, velocity)    
     #solver.solve(True)
     solver.iterate()
     print(solver.residuel)
