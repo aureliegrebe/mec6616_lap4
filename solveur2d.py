@@ -539,27 +539,37 @@ if __name__ == "__main__":
     mesher = MeshGenerator()
     
     # Générer un mesh 
-    mesh_parameters = {'mesh_type': 'TRI',
-                   'lc': 0.001
+    mesh_parameters = {'mesh_type': 'QUAD',
+                   'Nx': 60, 'Ny':60
                    }
     # mesh_obj = mesher.back_step(1.0, 1.5, 1.0, 3.0, mesh_parameters)
-    mesh_obj = mesher.rectangle([0.0, 0.02, 0.0, 0.01], mesh_parameters)
+    mesh_obj = mesher.rectangle([-1,1,-1,1], mesh_parameters)
+    
+    def vel (x,y):
+        return ((2*x**2 - x**4 - 1) * (y - y**3), -(2*y**2 - y**4 -1)*(x - x**3))
+    
+    def T_mms(x,y):
+        return (400 + 50*np.cos(np.pi*x) + 100*np.sin(np.pi*x*y))
     
     bc_list = [
-        BC("DIRICHLET", 100),
-        BC("NEUMANN", 0),
-        BC("DIRICHLET", 200),
-        BC("NEUMANN", 0),
+        BC("DIRICHLET", lambda y: T_mms(-1,y)),
+        BC("DIRICHLET", lambda x: T_mms(x,-1)),
+        BC("DIRICHLET", lambda y: T_mms(1,y)),
+        BC("DIRICHLET", lambda x: T_mms(x,1)),
     ]
     
+    
+    
     source = lambda x, y: 1e6
-    velocity = lambda x, y: (10 *x ,2 * y)
-    solver = Solver_2D(mesh_obj, 0.5, 1000, "UPWIND", bc_list, source, velocity)    
+    velocity = lambda x, y: vel(x,y)
+    solver = Solver_2D(mesh_obj, 1, 1, "UPWIND", bc_list, source, velocity)    
     #solver.solve(True)
     solver.iterate()
     print(solver.residuel)
     print(np.sum(solver.areas))
+    T_MMS = np.array([T_mms(x,y) for (x,y) in solver.centres])
     plt.figure()
-    plt.plot(solver.centres[:,0],solver.phi,".")
+    #plt.plot(solver.centres[:,0],solver.phi,".")
+    plt.plot(solver.centres[:,0],T_MMS)
     plt.show()
 
