@@ -1,0 +1,4 @@
+__pycache__
+rapport/build/
+*.png
+*.eps

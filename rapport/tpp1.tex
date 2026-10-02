@@ -1,0 +1,146 @@
+\documentclass[12pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{datetime}
+\usepackage{subcaption}
+\usepackage[letterpaper, margin=1.9cm]{geometry}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{siunitx}
+\sisetup{output-decimal-marker = {,}}
+\graphicspath{ {../figures} }
+\usepackage{derivative}
+\usepackage{booktabs}
+\usepackage[flushleft]{threeparttable}
+\usepackage{amsmath}
+\usepackage{parskip}
+
+\usepackage{csquotes}
+\usepackage[
+backend=biber,
+style=ieee,
+%style=verbose,
+citestyle=ieee,
+%sorting=nyt,
+%url=false
+]{biblatex}
+\bibliography{references}
+
+\title{MEC6616 --- TPP1}
+
+
+\author{Aurélie Grebe\\Noémie Herbinière}
+\newdate{duedate}{28}{09}{2026}
+\date{\displaydate{duedate}}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Dans la présente œuvre, nous proposons une résolution de l'équation de diffusion
+de la chaleur par volumes finis en 2D. Après une brève explication de
+la méthode de résolution, nous analyserons les résultats à l'aide d'un exemple.
+
+La méthode de calcul des gradients par la méthode Least-Square est développée dans le LAP3.
+
+\section{Méthodologie}
+
+L'équation de diffusion stationnaire est la suivante:
+\begin{equation} 
+%\mathrm{div} 
+	\vec{\nabla}\cdot\left[ D_{\phi} \vec{\nabla} \phi \right] = S_\phi
+\end{equation}
+
+L'équation est exprimée en forme matricielle par (détails des calculs développés dans le livre de Versteeg sections 11.7 et 11.8): $A\phi = B$
+
+Avec $A$ contenant les coefficients de diffusion, $\phi$ le champ que l'on souhaite résoudre et $B$ contenant les termes de source et de cross-diffusion.
+
+\subsection{Cellules intérieures}
+
+Numériquement, on implémente, en parcourant les arrêtes du maillage, les algorithmes suivants:
+
+\begin{align}
+	A[T_g,T_g] + &= D_i \\
+	A[T_d,T_d] + &= D_i \\
+	A[T_g,T_d] + &= -D_i \\
+	A[T_d,T_g] + &= -D_i \\
+	B[T_g] + &= S_{DC,i} \\
+	B[T_d] + &= -S_{DC,i}
+\end{align}
+
+
+Avec:
+
+\begin{align}
+	D_i &= \frac{\Gamma}{P_{NKSI}} \frac{\Delta A_i}{\Delta \xi} \\
+	S_{DC,i} &= -\Gamma \left(\frac{P_{KSIETA}}{P_{NKSI}}\right) \left(\frac{\overrightarrow{\mathrm{grad}} \phi_A + \overrightarrow{\mathrm{grad}} \phi_P}{2}\right) \Delta A_i . \hat{e_{\eta}}
+\end{align}
+
+où:
+
+\begin{align}
+	P_{NKSI} &= \hat{n_i}.\hat{e_{\xi}} \\
+	P_{KSIETA} &= \hat{e_{\xi}}.\hat{e_{\eta}} \\
+	\Delta A_i &= \sqrt{(X_b-X_a)^2+(Y_b-Y_a)^2} \\
+	\Delta \eta &= \Delta A_i \\
+	\Delta \xi &= \sqrt{(X_A-X_P)^2+(Y_A-Y_P)^2} \\
+	e_{\xi} &= \left(\frac{X_A-X_P}{\Delta \xi}, \frac{Y_A-Y_P}{\Delta \xi}\right) \\
+	e_{\eta} &= \left(\frac{X_b-X_a}{\Delta \eta}, \frac{Y_b-Y_a}{\Delta \eta}\right)
+\end{align}
+
+Ici, $(Xa, Y_a)$ et $(X_b,Y_b)$ sont, respectivement, les coordonnées du premier et deuxième noeud de chaque arrête $i$ tandis que $(X_P,Y_P)$ et $(X_A,Y_A)$ sont les coordonnées des centres de, respectivement, l'élément de gauche et l'élément de droite de l'arrête $i$.
+
+Pour prendre en compte le terme source, on ajoute: $B = B+S_{\phi}A$, où $S_{\phi}$ est le vecteur contenant la valeur du terme source au centre de chaque élément et A le vecteur de leurs aires respectives.
+
+Le calcul de $S_{DC,i}$ nécessitant de connaître le gradient du champ aux points A et P, il faut itérer la résolution plusieurs fois (nous avons choisi 5 itérations) en commençant par $S_{DC,i}=0$. A chaque itération, le $S_{DC,i}$ est re-caclulé en utilisant la méthode Least-Square pour obtenir les gradients provenant du champ $\phi$ obtenu à l'itération précédente. La valeur de la matrice B finit par converger.
+
+\subsection{Cellules aux frontières}
+
+Pour une condition aux limites de Neumann (détails dans le livre de Versteeg):
+\begin{align}
+A[T_g,T_g] + &= 0 \\
+B[T_g] + &= \Gamma \phi'_N \Delta A_i
+\end{align}
+
+Où $\phi'_N$ est la valeur de la condition sur la frontière.
+
+Pour une condition de Dirichlet:
+\begin{align}
+A[T_g,T_g] + &= D_i \\
+B[T_g] + &= \phi_D D_i
+\end{align}
+
+Cependant, attention, la valeur de $D_i$ à la frontière change légèrement pour utiliser la distance selon l'axe $\xi$ entre le centre de l'élément et le milieu de l'arrête frontière. $\phi_D$ est la valeur de la condition sur la frontière.
+
+\section{Résultats}
+
+L'exemple étudié est le 4.2 du livre de Versteeg, il s'agit un problème stationnaire de transfert de
+chaleur d'une plaque épaisse dont la température d'une face est fixée à $T_A =
+\SI{100}{\celsius}$, la face opposée à $T_B = \SI{200}{\celsius}$ et où une
+source de chaleur uniforme $q = \SI{1000}{\kilo\watt\per\m\cubed}$ est
+appliquée. Les températures fixées sur les frontières Est et Ouest sont donc les conditions de
+Dirichlet et on applique des conditions de Neumann nulles sur les frontières Nord et Sud.
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/rms_tri_nocross.pdf}
+		\caption{Maillage triangulaire sans diffusion croisé}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/rms_tri_cross.pdf}
+		\caption{Maillage triangulaire avec diffusion croisé}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/rms_quad.pdf}
+		\caption{Maillage quadrilatère structuré}
+	\end{subfigure}
+	\caption{}
+\end{figure}
+
+\printbibliography[]
+	
+
+\end{document}
