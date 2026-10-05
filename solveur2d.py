@@ -583,18 +583,29 @@ if __name__ == "__main__":
     #     BC(BCType.DIRICHLET,0),
     # ]
     
-    
-    
-    source = lambda x, y: 1e6
+    # Depuis source.py
+    source = lambda x, y: np.pi*(-100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) 
+                                 + 100.0*np.pi*x**2*np.sin(np.pi*x*y) + 50.0*y*(y**2 - 1)*
+                                 (2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1) 
+                                 + np.pi*(100.0*y**2*np.sin(np.pi*x*y) + 50.0*np.cos(np.pi*x)))
+
     velocity = lambda x, y: vel(x,y)
     solver = Solver_2D(mesh_obj, 1, 1, "UPWIND", bc_list, source, velocity)    
-    #solver.solve(True)
+    solver.solve(True)
     solver.iterate()
     print(solver.residuel)
     print(np.sum(solver.areas))
     T_MMS = np.array([T_mms(x,y) for (x,y) in solver.centres])
-    plt.figure()
+    #plt.figure()
     #plt.plot(solver.centres[:,0],solver.phi,".")
-    plt.plot(solver.centres[:,0],T_MMS)
+    #plt.plot(solver.centres[:,1],T_MMS)
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    plot = ax.scatter(solver.centres[:,0],solver.centres[:,1],T_MMS, c =T_MMS, cmap = "viridis")
+    plt.show()
+    
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    plot = ax.scatter(solver.centres[:,0],solver.centres[:,1],solver.phi, c =solver.phi, cmap = "viridis")
     plt.show()
 
