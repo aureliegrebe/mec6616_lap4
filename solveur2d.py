@@ -1,3 +1,4 @@
+from enum import Enum
 import numpy as np
 from typing import Optional, List
 from collections.abc import Callable
@@ -12,10 +13,16 @@ from mesh.meshPlotter import MeshPlotter
 
 # TODO: Add source term
 
+class BCType(Enum):
+    DIRICHLET = 1
+    NEUMANN = 2
+    DIRICHLET_FUNC = 3
+    NEUMANN_FUNC = 4
+
 @dataclass
 class BC():
-    type: Optional[str] = None
-    val: Optional[float] = None
+    type: Optional[BCType] = None
+    val: Optional[float | Callable] = None
 
 class Solver_2D:
     """
@@ -183,12 +190,16 @@ class Solver_2D:
             # Coefficients pour les cellules aux frontières
             if idx_f < self.mesh.number_of_boundary_faces:
                 bc = self.bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
-                if bc.type == "DIRICHLET":
-                    B[idx_g] += bc.val*diff_cnsts[idx_f]
+                if bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
+                    if bc.type is BCType.DIRICHLET_FUNC:
+                        bc_val = bc.val(*self.right_centres[idx_f])
+                    else:
+                        bc_val = bc.val
+                    B[idx_g] += bc_val*diff_cnsts[idx_f]
                     if first_iter: # Si on est à la première itération, on caclule A
                         self.A[idx_g,idx_g] += diff_cnsts[idx_f]
                     B[idx_g] += cross_diff[idx_f]
-                elif bc.type == "NEUMANN":
+                elif bc.type is BCType.NEUMANN:
                     B[idx_g] += self.therm_cond * self.face_size[idx_f] * bc.val
             # Coefficients pour les cellules intérieurs    
             else:
@@ -207,20 +218,24 @@ class Solver_2D:
             if idx_f < self.mesh.number_of_boundary_faces:
                 bc = self.bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
                 if self.schema == "UPWIND":
-                    if bc.type == "DIRICHLET":
-                        B[idx_g] += bc.val * max(-conv_cnsts[idx_f],0)
+                    if bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
+                        if bc.type is BCType.DIRICHLET_FUNC:
+                            bc_val = bc.val(*self.right_centres[idx_f])
+                        else:
+                            bc_val = bc.val
+                        B[idx_g] += bc_val * max(-conv_cnsts[idx_f],0)
                         if first_iter: # Si on est à la première itération, on caclule A
                             self.A[idx_g,idx_g] += max(conv_cnsts[idx_f],0)
-                    elif bc.type == "NEUMANN":
+                    elif bc.type is BCType.NEUMANN:
                         B[idx_g] += conv_cnsts[idx_f] * bc.val * self.p_nksi[idx_f] * self.d_ksi[idx_f] # TODO: à checker
                         if first_iter: # Si on est à la première itération, on caclule A
                             self.A[idx_g,idx_g] += max(conv_cnsts[idx_f],0) # TODO: ou juste F_i ??
                 elif self.schema == "CENTRE": # TODO: retrouver les coeffs pour centre en 2D
-                    if bc.type == "DIRICHLET":
+                    if bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
                         B[idx_g] += 0
                         if first_iter: # Si on est à la première itération, on caclule A
                             self.A[idx_g,idx_g] += 0
-                    elif bc.type == "NEUMANN":
+                    elif bc.type is BCType.NEUMANN:
                         B[idx_g] += 0
                         if first_iter: # Si on est à la première itération, on caclule A
                             self.A[idx_g,idx_g] += 0
@@ -459,9 +474,13 @@ class Solver_2D:
                 xy_edge = (np.array(self.mesh.get_node_to_xycoord(edge_nodes[0])) +
                     np.array(self.mesh.get_node_to_xycoord(edge_nodes[1]))) / 2
                 dxy = self.centres[idx_g] - xy_edge
-                if bc.type == "DIRICHLET":
-                    scalar_diff = self.phi[idx_g] - bc.val
-                elif bc.type == "NEUMANN":
+                if bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
+                    if bc.type is BCType.DIRICHLET_FUNC:
+                        bc_val = bc.val(*self.right_centres[idx_f])
+                    else:
+                        bc_val = bc.val
+                    scalar_diff = self.phi[idx_g] - bc_val
+                elif bc.type is BCType.NEUMANN:
                     # calculate edge normal
                     edge_vec = (np.array(self.mesh.get_node_to_xycoord(edge_nodes[1])) -
                         np.array(self.mesh.get_node_to_xycoord(edge_nodes[0])))
@@ -552,11 +571,17 @@ if __name__ == "__main__":
         return (400 + 50*np.cos(np.pi*x) + 100*np.sin(np.pi*x*y))
     
     bc_list = [
-        BC("DIRICHLET", lambda y: T_mms(-1,y)),
-        BC("DIRICHLET", lambda x: T_mms(x,-1)),
-        BC("DIRICHLET", lambda y: T_mms(1,y)),
-        BC("DIRICHLET", lambda x: T_mms(x,1)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(-1,y)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,-1)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(1,y)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,1)),
     ]
+    # bc_list = [
+    #     BC(BCType.DIRICHLET,0),
+    #     BC(BCType.DIRICHLET,0),
+    #     BC(BCType.DIRICHLET,0),
+    #     BC(BCType.DIRICHLET,0),
+    # ]
     
     
     
