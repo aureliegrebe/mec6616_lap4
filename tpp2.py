@@ -13,7 +13,7 @@ plt.rcParams["figure.figsize"] = [8.5, 8.5]
 
 # Différentes tailles de cellules pour calculer l'erreur
 CELL_LENGTHS = [0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005]
-N_LIST = [2, 5, 10, 20, 50, 100]
+N_LIST = [2, 5, 10, 20]
 
 # Constantes
 N = 25 # nombre d'éléments pour le maillage triangle
@@ -29,7 +29,7 @@ def vel (x,y):
 def T_mms(x,y):
     return (400 + 50*np.cos(np.pi*x) + 100*np.sin(np.pi*x*y))
 
-def init_solver(quad:bool = True):
+def init_solver(quad:bool = True, upwind=True):
     mesher = MeshGenerator()
     
     # Générer un mesh 
@@ -59,6 +59,96 @@ def init_solver(quad:bool = True):
 
     velocity = lambda x, y: vel(x,y)
     return Solver_2D(mesh_obj, 1, 1, "UPWIND", bc_list, source, velocity)    
+def mms(solver: Solver_2D, quad=False, cross_diff=False):
+    bc_list = [
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(-1,y)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,-1)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(1,y)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,1)),
+    ]
+
+    source = lambda x, y: np.pi*(-100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) 
+                                 + 100.0*np.pi*x**2*np.sin(np.pi*x*y) + 50.0*y*(y**2 - 1)*
+                                 (2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1) 
+                                 + np.pi*(100.0*y**2*np.sin(np.pi*x*y) + 50.0*np.cos(np.pi*x)))
+
+    velocity = lambda x, y: vel(x,y)
+    # res_func = lambda x, y: np.sin(2 * np.pi * x) * np.sin(2 * np.pi * y)
+    res_func = T_mms
+    mesher = MeshGenerator()
+    if quad:
+        mesh_parameters = {'mesh_type': 'QUAD',
+                   'Nx': Nx, 'Ny': Ny                  
+                   }
+    else:
+        mesh_parameters = {'mesh_type': 'TRI',
+                   'lc': L/N
+                   }
+    epsilon2 = []
+    h_list = []
+    solver.set_source_field(source)
+    
+    # Caclul de l'erreur RMS
+    for (i, n) in enumerate(N_LIST):
+        if quad:
+            mesh_parameters["Nx"] = n
+            mesh_parameters["Ny"] = n
+        else:
+            mesh_parameters["lc"] = 1/n
+        solver.set_mesh(mesher.rectangle([-1.0, 1.0, -1.0, 1.0], mesh_parameters), bc_list)
+        exact_sol = np.array(res_func(solver.centres[:,0],
+                                                solver.centres[:,1]))
+        if cross_diff:
+            solver.iterate()
+        else:
+            solver.solve(first_iter=True)
+        err = np.linalg.norm(solver.phi - exact_sol, axis=0)
+        rms = np.sqrt(np.average(err**2))
+        epsilon2.append(rms)
+        h_list.append(solver.get_h())
+
+        if i == 3:
+            fig = plt.figure()
+            ax = fig.add_subplot(projection='3d')
+            ax.scatter(solver.centres[:,0], solver.centres[:,1], exact_sol, label="analytique")
+            ax.scatter(solver.centres[:,0], solver.centres[:,1], solver.phi, label="numérique")
+            # plt.plot(solver.centres[:,1], solver.phi, '.')
+            # plt.quiver(solver.centres[:,0], solver.centres[:,1],
+            #            solver.phi()[:,0], solver.get_grad()[:,1])
+            plt.xlabel("x")
+            plt.ylabel("y")
+            plt.legend()
+            if cross_diff:
+                plt.savefig("./figures/mms_field_cd.pdf")
+            elif quad:
+                plt.savefig("./figures/mms_field_quad.pdf")
+            else:
+                plt.savefig("./figures/mms_field_tri_no_cd.pdf")
+
+    # p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(N_LIST[-2]/N_LIST[-1]))
+    p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(h_list[-1]/h_list[-2]))
+    print(f"Ordre de convergence: {p:.5f}")
+
+    # Tracer l'erreur
+    plt.figure()
+    # plt.plot(L/np.array(N_LIST), epsilon2)
+    plt.plot(h_list, epsilon2, ".-")
+    # plt.plot(epsilon2, ".-")
+    plt.grid()
+    plt.xlabel("h (m)")
+    plt.ylabel("RMS (err)")
+    plt.yscale("log")
+    plt.xscale("log")
+    ax = plt.gca()
+    ax.xaxis.minorticks_off()
+    plt.xlim([0.01, 1])
+    if quad:
+        plt.savefig("./figures/mms_rms_quad.pdf")
+    elif cross_diff:
+        plt.savefig("./figures/mms_rms_tri_cross.pdf")
+    else:
+        plt.savefig("./figures/mms_rms_tri_nocross.pdf")
+
 
 
 def main():    
@@ -67,6 +157,8 @@ def main():
     solver.iterate()
     print(solver.residuel)
     print(np.sum(solver.areas))
+
+    mms(solver, quad=True)
     
     T_MMS = np.array([T_mms(x,y) for (x,y) in solver.centres])
 

@@ -95,7 +95,7 @@ class Solver_2D:
         --------
         None
         """
-        self.conec = MeshConnectivity(mesh)
+        self.conec = MeshConnectivity(mesh, verbose=False)
         self.conec.compute_connectivity()
         self.mesh = mesh
 
