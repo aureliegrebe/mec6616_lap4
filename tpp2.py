@@ -19,17 +19,24 @@ N_LIST = [2, 5, 10, 20]
 N = 25 # nombre d'éléments pour le maillage triangle
 Nx = 30 # nombre d'éléments en x pour le maillage quad
 Ny = 10 # nombre d'éléments en y pour le maillage quad
+L = 2
 
-# Nombre de trous attendus pour le mesh généré
-trous = 0
+THERM_COND = 1
+DENSITY = 1
 
-def vel (x,y):
+def velocity (x,y):
     return ((2*x**2 - x**4 - 1) * (y - y**3), -(2*y**2 - y**4 -1)*(x - x**3))
 
 def T_mms(x,y):
     return (400 + 50*np.cos(np.pi*x) + 100*np.sin(np.pi*x*y))
 
-def init_solver(quad:bool = True, upwind=True):
+def source(x,y):
+    return np.pi*(-100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) 
+                                 + 100.0*np.pi*x**2*np.sin(np.pi*x*y) + 50.0*y*(y**2 - 1)*
+                                 (2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1) 
+                                 + np.pi*(100.0*y**2*np.sin(np.pi*x*y) + 50.0*np.cos(np.pi*x)))
+
+def init_solver(quad:bool = True, therm_cond = float, density = float, method = str):
     mesher = MeshGenerator()
     
     # Générer un mesh 
@@ -51,30 +58,23 @@ def init_solver(quad:bool = True, upwind=True):
         BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(1,y)),
         BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,1)),
     ]
+    
+    return Solver_2D(mesh_obj, therm_cond, density, method, bc_list, source, velocity)    
 
-    source = lambda x, y: np.pi*(-100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) 
-                                 + 100.0*np.pi*x**2*np.sin(np.pi*x*y) + 50.0*y*(y**2 - 1)*
-                                 (2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1) 
-                                 + np.pi*(100.0*y**2*np.sin(np.pi*x*y) + 50.0*np.cos(np.pi*x)))
+def solve_diff_conv(solver = Solver_2D):
+    solver.solve(True)
+    solver.iterate()
+    print(solver.residuel)
+    print(np.sum(solver.areas))
 
-    velocity = lambda x, y: vel(x,y)
-    return Solver_2D(mesh_obj, 1, 1, "UPWIND", bc_list, source, velocity)    
-def mms(solver: Solver_2D, quad=False, cross_diff=False):
-    bc_list = [
-        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(-1,y)),
-        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,-1)),
-        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(1,y)),
-        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,1)),
-    ]
+    plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.scatter(solver.centres[:,0],solver.centres[:,1],solver.phi, c = solver.phi, cmap = "viridis")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.title("Solution numérique")
 
-    source = lambda x, y: np.pi*(-100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) 
-                                 + 100.0*np.pi*x**2*np.sin(np.pi*x*y) + 50.0*y*(y**2 - 1)*
-                                 (2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1) 
-                                 + np.pi*(100.0*y**2*np.sin(np.pi*x*y) + 50.0*np.cos(np.pi*x)))
-
-    velocity = lambda x, y: vel(x,y)
-    # res_func = lambda x, y: np.sin(2 * np.pi * x) * np.sin(2 * np.pi * y)
-    res_func = T_mms
+def convergence(solver: Solver_2D, quad=False, cross_diff=False):
     mesher = MeshGenerator()
     if quad:
         mesh_parameters = {'mesh_type': 'QUAD',
@@ -84,6 +84,14 @@ def mms(solver: Solver_2D, quad=False, cross_diff=False):
         mesh_parameters = {'mesh_type': 'TRI',
                    'lc': L/N
                    }
+    # Conditions aux limites
+    bc_list = [
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(-1,y)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,-1)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(1,y)),
+        BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,1)),
+    ]
+    
     epsilon2 = []
     h_list = []
     solver.set_source_field(source)
@@ -94,9 +102,9 @@ def mms(solver: Solver_2D, quad=False, cross_diff=False):
             mesh_parameters["Nx"] = n
             mesh_parameters["Ny"] = n
         else:
-            mesh_parameters["lc"] = 1/n
-        solver.set_mesh(mesher.rectangle([-1.0, 1.0, -1.0, 1.0], mesh_parameters), bc_list)
-        exact_sol = np.array(res_func(solver.centres[:,0],
+            mesh_parameters["lc"] = L/n
+        solver.set_mesh(mesher.rectangle([-1,1,-1,1], mesh_parameters), bc_list)
+        exact_sol = np.array(T_mms(solver.centres[:,0],
                                                 solver.centres[:,1]))
         if cross_diff:
             solver.iterate()
@@ -118,12 +126,6 @@ def mms(solver: Solver_2D, quad=False, cross_diff=False):
             plt.xlabel("x")
             plt.ylabel("y")
             plt.legend()
-            if cross_diff:
-                plt.savefig("./figures/mms_field_cd.pdf")
-            elif quad:
-                plt.savefig("./figures/mms_field_quad.pdf")
-            else:
-                plt.savefig("./figures/mms_field_tri_no_cd.pdf")
 
     # p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(N_LIST[-2]/N_LIST[-1]))
     p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(h_list[-1]/h_list[-2]))
@@ -141,45 +143,16 @@ def mms(solver: Solver_2D, quad=False, cross_diff=False):
     plt.xscale("log")
     ax = plt.gca()
     ax.xaxis.minorticks_off()
-    plt.xlim([0.01, 1])
-    if quad:
-        plt.savefig("./figures/mms_rms_quad.pdf")
-    elif cross_diff:
-        plt.savefig("./figures/mms_rms_tri_cross.pdf")
-    else:
-        plt.savefig("./figures/mms_rms_tri_nocross.pdf")
-
-
+    plt.xlim([0.005, 0.5])
 
 def main():    
-    solver = init_solver(True)
-    solver.solve(True)
-    solver.iterate()
-    print(solver.residuel)
-    print(np.sum(solver.areas))
-
-    mms(solver, quad=True)
-    
-    T_MMS = np.array([T_mms(x,y) for (x,y) in solver.centres])
-
-    plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.scatter(solver.centres[:,0],solver.centres[:,1],solver.phi, c = solver.phi, cmap = "viridis")
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Solution numérique")
+    # for k in [1,5,10,100,10000]: # Faire varier le nb de Peclet
+    #     solver = init_solver(True, k, DENSITY, "UPWIND")
+    #     solve_diff_conv(solver)
+    solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
+    convergence(solver,True)
     plt.show()
     
-    plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.scatter(solver.centres[:,0],solver.centres[:,1],solver.phi, c = 'r', label = "numérique")
-    ax.scatter(solver.centres[:,0],solver.centres[:,1],T_MMS, c = 'b', label = "analytique (MMS)")
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.legend()
-    plt.show()
-    
-
 if __name__ == '__main__':
     main()
 
