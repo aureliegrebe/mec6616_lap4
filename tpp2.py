@@ -15,7 +15,7 @@ plt.rcParams["figure.figsize"] = [8.5, 8.5]
 
 # Différentes tailles de cellules pour calculer l'erreur
 CELL_LENGTHS = [0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005]
-N_LIST = [2, 5, 10, 20, 50]
+N_LIST = [2, 5, 10, 20, 50, 100]
 
 # Constantes
 N = 25 # nombre d'éléments pour le maillage triangle
@@ -43,9 +43,10 @@ def T_mms(x,y):
     return (400 + 50*np.cos(np.pi*x) + 100*np.sin(np.pi*x*y))
 
 def source(x, y, k):
-    return np.pi*(50*np.pi*k*(2*x**2*np.sin(np.pi*x*y) + 2*y**2*np.sin(np.pi*x*y) + np.cos(np.pi*x)) -
-        100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) + 50.0*y*(y**2 -
-            1)*(2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1))
+    return np.pi * (50 * np.pi * k * (2 * x * x * np.sin(np.pi*x*y) +
+        2*y*y*np.sin(np.pi*x*y) + np.cos(np.pi*x)) - 100.0*x*x*(x*x-
+            1)*(np.pow(y, 4) - 2 * np.pow(y,2) + 1)*np.cos(np.pi*x*y) + 50.0*y*(y*y -
+            1)*(2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(np.pow(x, 4) - 2*x*x + 1))
 
 def sym_source():
     xs, ys, ks = sp.symbols('x y k')
@@ -307,11 +308,11 @@ def main():
     # convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
     # centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
     # convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
-    for k in [1,10,100,10000]:
+    for k in [1,10,100, 1000]:
         upwind_solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
         convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
         centre_solver = init_solver(False, THERM_COND, DENSITY, "CENTRE")
-        convergence(centre_solver,quad=False, cross_diff=False, upwind=False)
+        convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
     plt.show()
     
 if __name__ == '__main__':
