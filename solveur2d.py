@@ -236,9 +236,9 @@ class Solver_2D:
                             bc_val = bc.val(*self.right_centres[idx_f])
                         else:
                             bc_val = bc.val
-                        B[idx_g] += bc_val * face_fluxes[idx_f]
+                        B[idx_g] += -bc_val * face_fluxes[idx_f] / 2
                         if first_iter: # Si on est à la première itération, on caclule A
-                            self.A[idx_g,idx_g] += 0
+                            self.A[idx_g,idx_g] += face_fluxes[idx_f] / 2
                     elif bc.type is BCType.NEUMANN:
                         B[idx_g] += face_fluxes[idx_f] * bc.val * self.p_nksi[idx_f] * self.d_ksi[idx_f] / 2. # TODO: à checker
                         if first_iter: # Si on est à la première itération, on caclule A
