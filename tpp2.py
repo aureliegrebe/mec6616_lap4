@@ -65,7 +65,6 @@ def sym_source():
     d2T_dx2 = sp.diff(T_expr, xs, 2)
     d2T_dy2 = sp.diff(T_expr, ys, 2)
     
-    S_expr = sp.simplify(rho * (u * dT_dx + v * dT_dy) - k * (d2T_dx2 + d2T_dy2))
     S_expr_2 = sp.simplify(rho * (u * dT_dx + v * dT_dy) - ks * (d2T_dx2 + d2T_dy2))
     print(S_expr_2)
 
@@ -308,17 +307,17 @@ def ex5_1i(quad=True, cross_diff=False, method="UPWIND"):
 
 
 def main():    
-    ex5_1i()
-    ex5_1i(method="CENTRE")
-    upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
-    convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
-    centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
-    convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
-    # for k in [1,10,100, 1000]:
-    #     upwind_solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
-    #     convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
-    #     centre_solver = init_solver(False, THERM_COND, DENSITY, "CENTRE")
-    #     convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+    # ex5_1i()
+    # ex5_1i(method="CENTRE")
+    # upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
+    # convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
+    # centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
+    # convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+    for k in [1,10,100, 1000]:
+        upwind_solver = init_solver(True, k, DENSITY, "UPWIND")
+        convergence(upwind_solver,quad=True, cross_diff=False, upwind=True, therm_cond = k)
+        centre_solver = init_solver(True, k, DENSITY, "CENTRE")
+        convergence(centre_solver,quad=True, cross_diff=False, upwind=False, therm_cond = k)
     plt.show()
     
 if __name__ == '__main__':
