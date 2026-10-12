@@ -139,6 +139,41 @@ Cependant, attention, les valeurs de $D_i$ et $F_i$ à la frontière changent l�
 
 \section{Résultats}
 
+\subsection{Maillage quadrilatère transfini}
+
+Le maillage utilisé est un carré de 2x2 composé de 20 éléments selon x et y, il est présenté en figure~\ref{xxxx}.
+
+Afin de faire varier le nombre de Peclet nous avons fait varier la conductivité thermique $k$.
+
+AJOUTER MAILLAGE (moi il veut pas plot for some reason)
+
+AJOUTER les savefig dans le code pour les contours et les coupes à x et y constants.
+
+AJOUTER ordres de convergence 
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/contours_quad_centre_k1.pdf}
+		\caption{Contours des champs de température}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/XXXXX.pdf}
+		\caption{Coupe à $Y = 1$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/mms_centre_quad_rms_k1.pdf}
+		\caption{Convergence observée à l'aide de l'erreur RMS}
+	\end{subfigure}
+	\caption{Maillage quadrilatère, méthode centrée pour $k = 1$}
+	\label{fig:quad_centre_k1}
+\end{figure}
+
+RÉPÉTER POUR TOUS LES K PUIS PAREIL EN CENTRÉ
+
+\subsection{Maillage triangulaire}
+
 
 
 \printbibliography[]

@@ -14,13 +14,13 @@ plt.rc("legend", fontsize=15)
 plt.rcParams["figure.figsize"] = [8.5, 8.5]
 
 # Différentes tailles de cellules pour calculer l'erreur
-CELL_LENGTHS = [0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005]
-N_LIST = [2, 5, 10, 20, 50, 100]
+# N_LIST = [2, 5, 10, 20, 50, 100]
+N_LIST = [2, 5, 10, 20, 50]
 
 # Constantes
-N = 25 # nombre d'éléments pour le maillage triangle
-Nx = 30 # nombre d'éléments en x pour le maillage quad
-Ny = 10 # nombre d'éléments en y pour le maillage quad
+N = 20 # nombre d'éléments pour le maillage triangle
+Nx = 20 # nombre d'éléments en x pour le maillage quad
+Ny = 20 # nombre d'éléments en y pour le maillage quad
 L = 2
 
 THERM_COND = 1
@@ -307,18 +307,34 @@ def ex5_1i(quad=True, cross_diff=False, method="UPWIND"):
 
 
 def main():    
+    
+    plotter = MeshPlotter()
+
     # ex5_1i()
     # ex5_1i(method="CENTRE")
     # upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
     # convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
     # centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
     # convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+    
+    # # Maillage quadrilatère transfini
+    # for k in [1,10,100, 1000]:
+    #     upwind_solver = init_solver(True, k, DENSITY, "UPWIND")
+    #     convergence(upwind_solver,quad=True, cross_diff=False, upwind=True, therm_cond = k)
+    #     centre_solver = init_solver(True, k, DENSITY, "CENTRE")
+    #     convergence(centre_solver,quad=True, cross_diff=False, upwind=False, therm_cond = k)
+    # plt.show()
+    # plotter.plot_mesh(centre_solver)
+
+    
+    # Maillage triangulaire
     for k in [1,10,100, 1000]:
-        upwind_solver = init_solver(True, k, DENSITY, "UPWIND")
-        convergence(upwind_solver,quad=True, cross_diff=False, upwind=True, therm_cond = k)
-        centre_solver = init_solver(True, k, DENSITY, "CENTRE")
-        convergence(centre_solver,quad=True, cross_diff=False, upwind=False, therm_cond = k)
+        upwind_solver = init_solver(False, k, DENSITY, "UPWIND")
+        convergence(upwind_solver,quad=False, cross_diff=True, upwind=True, therm_cond = k)
+        centre_solver = init_solver(False, k, DENSITY, "CENTRE")
+        convergence(centre_solver,quad=False, cross_diff=True, upwind=False, therm_cond = k)
     plt.show()
+    plotter.plot_mesh(centre_solver)
     
 if __name__ == '__main__':
     main()
