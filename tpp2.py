@@ -74,7 +74,7 @@ def solve_diff_conv(solver = Solver_2D):
     plt.ylabel("y")
     plt.title("Solution numérique")
 
-def convergence(solver: Solver_2D, quad=False, cross_diff=False):
+def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True):
     mesher = MeshGenerator()
     if quad:
         mesh_parameters = {'mesh_type': 'QUAD',
@@ -129,7 +129,11 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False):
 
     # p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(N_LIST[-2]/N_LIST[-1]))
     p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(h_list[-1]/h_list[-2]))
-    print(f"Ordre de convergence: {p:.5f}")
+    if upwind:
+        print(f"Ordre de convergence (Upwind) : {p:.5f}")
+    else:
+        print(f"Ordre de convergence (centré) : {p:.5f}")
+
 
     # Tracer l'erreur
     plt.figure()
@@ -142,15 +146,30 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False):
     plt.yscale("log")
     plt.xscale("log")
     ax = plt.gca()
-    ax.xaxis.minorticks_off()
-    plt.xlim([0.005, 0.5])
+    # ax.xaxis.minorticks_off()
+    # plt.xlim([0.005, 0.5])
+    
+    if upwind and quad:
+        plt.savefig("./figures/mms_upwind_quad_rms.pdf")
+    elif upwind and cross_diff:
+        plt.savefig("./figures/mms_upwind_tri_cd_rms.pdf")
+    elif upwind:
+        plt.savefig("./figures/mms_upwind_tri_nocd_rms.pdf")
+    elif quad:
+        plt.savefig("./figures/mms_centre_quad_rms.pdf")
+    elif cross_diff:
+        plt.savefig("./figures/mms_centre_tri_cd_rms.pdf")
+    else:
+        plt.savefig("./figures/mms_centre_tri_nocd_rms.pdf")
+
+
+
 
 def main():    
-    # for k in [1,5,10,100,10000]: # Faire varier le nb de Peclet
-    #     solver = init_solver(True, k, DENSITY, "UPWIND")
-    #     solve_diff_conv(solver)
-    solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
-    convergence(solver,True)
+    upwind_solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
+    convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
+    centre_solver = init_solver(True, THERM_COND, DENSITY, "CENTRE")
+    convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
     plt.show()
     
 if __name__ == '__main__':
