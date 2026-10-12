@@ -44,35 +44,45 @@ la méthode de résolution, nous analyserons les résultats à l'aide de différ
 
 \section{Méthodologie}
 
-L'équation de diffusion stationnaire est la suivante:
+L'équation de convection-diffusion stationnaire est la suivante:
 \begin{equation} 
-%\mathrm{div} 
-	\vec{\nabla}\cdot\left[ D_{\phi} \vec{\nabla} \phi \right] = S_\phi
+\frac{\partial {(uT)}}{\partial x} + \frac{\partial {(vT)}}{\partial y} - k \left(\frac{\partial^2 {T}}{\partial^2 x} + \frac{\partial^2 {T}}{\partial^2 y} \right) = S
 \end{equation}
 
-L'équation est exprimée en forme matricielle par (détails des calculs développés dans le livre de Versteeg sections 11.7 et 11.8): $A\phi = B$
+L'équation est exprimée en forme matricielle par: $A\phi = B$
 
-Avec $A$ contenant les coefficients de diffusion, $\phi$ le champ que l'on souhaite résoudre et $B$ contenant les termes de source et de cross-diffusion.
+Avec $A$ contenant les coefficients de diffusion et convection, $\phi$ le champ que l'on souhaite résoudre et $B$ contenant les termes de source et de cross-diffusion.
 
 \subsection{Cellules intérieures}
 
-Numériquement, on implémente, en parcourant les arrêtes du maillage, les algorithmes suivants:
+En méthode centrée:
 
 \begin{align}
-	A[T_g,T_g] + &= D_i \\
-	A[T_d,T_d] + &= D_i \\
-	A[T_g,T_d] + &= -D_i \\
-	A[T_d,T_g] + &= -D_i \\
+	A[T_g,T_g] + &= D_i + \frac{F_i}{2}\\
+	A[T_d,T_d] + &= D_i - \frac{F_i}{2}\\
+	A[T_g,T_d] + &= -D_i + \frac{F_i}{2}\\
+	A[T_d,T_g] + &= -D_i - \frac{F_i}{2}\\
 	B[T_g] + &= S_{DC,i} \\
 	B[T_d] + &= -S_{DC,i}
 \end{align}
 
+En méthode Upwind:
+
+\begin{align}
+	A[T_g,T_g] + &= D_i + max(F_i,0)\\
+	A[T_d,T_d] + &= D_i + max(-F_i,0)\\
+	A[T_g,T_d] + &= -D_i - max(-F_i,0)\\
+	A[T_d,T_g] + &= -D_i - max(F_i,0)\\
+	B[T_g] + &= S_{DC,i} \\
+	B[T_d] + &= -S_{DC,i}
+\end{align}
 
 Avec:
 
 \begin{align}
 	D_i &= \frac{\Gamma}{P_{NKSI}} \frac{\Delta A_i}{\Delta \xi} \\
-	S_{DC,i} &= -\Gamma \left(\frac{P_{KSIETA}}{P_{NKSI}}\right) \left(\frac{\overrightarrow{\mathrm{grad}} \phi_A + \overrightarrow{\mathrm{grad}} \phi_P}{2}\right) \Delta A_i . \hat{e_{\eta}}
+	S_{DC,i} &= -\Gamma \left(\frac{P_{KSIETA}}{P_{NKSI}}\right) \left(\frac{\overrightarrow{\mathrm{grad}} \phi_A + \overrightarrow{\mathrm{grad}} \phi_P}{2}\right) \Delta A_i . \hat{e_{\eta}} \\
+	F_i = \hat{n_i}.(\rho \overrightarrow{u_i}) \Delta A_i
 \end{align}
 
 où:
@@ -91,52 +101,45 @@ Ici, $(Xa, Y_a)$ et $(X_b,Y_b)$ sont, respectivement, les coordonnées du premie
 
 Pour prendre en compte le terme source, on ajoute: $B = B+S_{\phi}A$, où $S_{\phi}$ est le vecteur contenant la valeur du terme source au centre de chaque élément et A le vecteur de leurs aires respectives.
 
-Le calcul de $S_{DC,i}$ nécessitant de connaître le gradient du champ aux points A et P, il faut itérer la résolution plusieurs fois (nous avons choisi 5 itérations) en commençant par $S_{DC,i}=0$. A chaque itération, le $S_{DC,i}$ est re-caclulé en utilisant la méthode Least-Square pour obtenir les gradients provenant du champ $\phi$ obtenu à l'itération précédente. La valeur de la matrice B finit par converger.
+Le calcul de $S_{DC,i}$ nécessitant de connaître le gradient du champ aux points A et P, il faut itérer la résolution plusieurs fois en commençant par $S_{DC,i}=0$. A chaque itération, le $S_{DC,i}$ est re-caclulé en utilisant la méthode Least-Square pour obtenir les gradients provenant du champ $\phi$ obtenu à l'itération précédente. La valeur de la matrice B finit par converger.
 
 \subsection{Cellules aux frontières}
 
-Pour une condition aux limites de Neumann (détails dans le livre de Versteeg):
+Pour une condition aux limites de Neumann:
+
+En centré:
 \begin{align}
-A[T_g,T_g] + &= 0 \\
-B[T_g] + &= \Gamma \phi'_N \Delta A_i
+A[T_g,T_g] + &= F_i/2 \\
+B[T_g] + &= \Gamma \phi'_N \Delta A_i + \frac {F_i \phi'_N P_{NKSI,i} \Delta \xi}{2}
+\end{align}
+
+En Upwind:
+\begin{align}
+A[T_g,T_g] + &= max(F_i,0) \\
+B[T_g] + &= \Gamma \phi'_N \Delta A_i + min(F_i,0) \phi'_N P_{NKSI,i} \Delta \xi
 \end{align}
 
 Où $\phi'_N$ est la valeur de la condition sur la frontière.
 
 Pour une condition de Dirichlet:
+
+En centré :
 \begin{align}
-A[T_g,T_g] + &= D_i \\
-B[T_g] + &= \phi_D D_i
+A[T_g,T_g] + &= D_i + F_i/2\\
+B[T_g] + &= \phi_D D_i + S_{DC,i} - \phi_D F_i/2
 \end{align}
 
-Cependant, attention, la valeur de $D_i$ à la frontière change légèrement pour utiliser la distance selon l'axe $\xi$ entre le centre de l'élément et le milieu de l'arrête frontière. $\phi_D$ est la valeur de la condition sur la frontière.
+En Upwind:
+\begin{align}
+A[T_g,T_g] + &= D_i + max(F_i,0)\\
+B[T_g] + &= \phi_D D_i + S_{DC,i} + max(-F_i,0) \phi_D
+\end{align}
+
+Cependant, attention, les valeurs de $D_i$ et $F_i$ à la frontière changent légèrement pour utiliser la distance selon l'axe $\xi$ entre le centre de l'élément et le milieu de l'arrête frontière. $\phi_D$ est la valeur de la condition sur la frontière. Dans le cas d'une condition de Dirichlet constante, le terme $S_{DC,i}$ est constant.
 
 \section{Résultats}
 
-L'exemple étudié est le 4.2 du livre de Versteeg, il s'agit un problème stationnaire de transfert de
-chaleur d'une plaque épaisse dont la température d'une face est fixée à $T_A =
-\SI{100}{\celsius}$, la face opposée à $T_B = \SI{200}{\celsius}$ et où une
-source de chaleur uniforme $q = \SI{1000}{\kilo\watt\per\m\cubed}$ est
-appliquée. Les températures fixées sur les frontières Est et Ouest sont donc les conditions de
-Dirichlet et on applique des conditions de Neumann nulles sur les frontières Nord et Sud.
 
-\begin{figure}
-	\begin{subfigure}[t]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{../figures/rms_tri_nocross.pdf}
-		\caption{Maillage triangulaire sans diffusion croisé}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}[t]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{../figures/rms_tri_cross.pdf}
-		\caption{Maillage triangulaire avec diffusion croisé}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}[t]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{../figures/rms_quad.pdf}
-		\caption{Maillage quadrilatère structuré}
-	\end{subfigure}
-	\caption{}
-\end{figure}
 
 \printbibliography[]
 	
