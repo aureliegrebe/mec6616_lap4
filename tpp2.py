@@ -2,6 +2,8 @@ from cProfile import label
 import numpy as np
 from mesh.meshGenerator import MeshGenerator
 from mesh.meshPlotter import MeshPlotter
+import sympy as sp
+
 
 import matplotlib.pyplot as plt
 from solveur2d import Solver_2D, BC, BCType
@@ -13,7 +15,7 @@ plt.rcParams["figure.figsize"] = [8.5, 8.5]
 
 # Différentes tailles de cellules pour calculer l'erreur
 CELL_LENGTHS = [0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005]
-N_LIST = [2, 5, 10, 20, 50, 100]
+N_LIST = [2, 5, 10, 20, 50]
 
 # Constantes
 N = 25 # nombre d'éléments pour le maillage triangle
@@ -40,11 +42,31 @@ def velocity (x,y):
 def T_mms(x,y):
     return (400 + 50*np.cos(np.pi*x) + 100*np.sin(np.pi*x*y))
 
-def source(x,y):
-    return np.pi*(-100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) 
-                                 + 100.0*np.pi*x**2*np.sin(np.pi*x*y) + 50.0*y*(y**2 - 1)*
-                                 (2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1) 
-                                 + np.pi*(100.0*y**2*np.sin(np.pi*x*y) + 50.0*np.cos(np.pi*x)))
+def source(x, y, k):
+    return np.pi*(50*np.pi*k*(2*x**2*np.sin(np.pi*x*y) + 2*y**2*np.sin(np.pi*x*y) + np.cos(np.pi*x)) -
+        100.0*x**2*(x**2 - 1)*(y**4 - 2*y**2 + 1)*np.cos(np.pi*x*y) + 50.0*y*(y**2 -
+            1)*(2*y*np.cos(np.pi*x*y) - np.sin(np.pi*x))*(x**4 - 2*x**2 + 1))
+
+def sym_source():
+    xs, ys, ks = sp.symbols('x y k')
+    rho = 1.0
+
+    u, v = velocity(xs, ys)
+
+    T_expr = (
+        400
+        + 50*sp.cos(sp.pi*xs)
+        + 100*sp.sin(sp.pi*xs*ys)
+    )
+
+    dT_dx = sp.diff(T_expr, xs)
+    dT_dy = sp.diff(T_expr, ys)
+    d2T_dx2 = sp.diff(T_expr, xs, 2)
+    d2T_dy2 = sp.diff(T_expr, ys, 2)
+    
+    S_expr = sp.simplify(rho * (u * dT_dx + v * dT_dy) - k * (d2T_dx2 + d2T_dy2))
+    S_expr_2 = sp.simplify(rho * (u * dT_dx + v * dT_dy) - ks * (d2T_dx2 + d2T_dy2))
+    print(S_expr_2)
 
 def init_solver(quad:bool = True, therm_cond = float, density = float, method = str):
     mesher = MeshGenerator()
@@ -69,7 +91,9 @@ def init_solver(quad:bool = True, therm_cond = float, density = float, method = 
         BC(BCType.DIRICHLET_FUNC, lambda x, y: T_mms(x,1)),
     ]
     
-    return Solver_2D(mesh_obj, therm_cond, density, method, bc_list, source, velocity)    
+    source_func = lambda x,y: source(x,y,therm_cond)
+    
+    return Solver_2D(mesh_obj, therm_cond, density, method, bc_list, source_func, velocity)    
 
 def solve_diff_conv(solver = Solver_2D):
     solver.solve(True)
@@ -84,7 +108,7 @@ def solve_diff_conv(solver = Solver_2D):
     plt.ylabel("y")
     plt.title("Solution numérique")
 
-def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True):
+def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True, therm_cond = THERM_COND):
     mesher = MeshGenerator()
     if quad:
         mesh_parameters = {'mesh_type': 'QUAD',
@@ -104,7 +128,8 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True):
     
     epsilon2 = []
     h_list = []
-    solver.set_source_field(source)
+    source_func = lambda x,y: source(x,y,therm_cond)
+    solver.set_source_field(source_func)
     
     # Caclul de l'erreur RMS
     for (i, n) in enumerate(N_LIST):
@@ -125,7 +150,7 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True):
         epsilon2.append(rms)
         h_list.append(solver.get_h())
 
-        if i == 3:
+        if i == 1:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             ax.scatter(solver.centres[:,0], solver.centres[:,1], exact_sol, label="analytique")
@@ -278,11 +303,15 @@ def ex5_1i(quad=True, cross_diff=False, method="UPWIND"):
 def main():    
     ex5_1i()
     ex5_1i(method="CENTRE")
-    for k in [1,10,100,1000]:
-        upwind_solver = init_solver(True, k, DENSITY, "UPWIND")
+    # upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
+    # convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
+    # centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
+    # convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+    for k in [1,10,100,10000]:
+        upwind_solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
         convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
-        centre_solver = init_solver(True, k, DENSITY, "CENTRE")
-        convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+        centre_solver = init_solver(False, THERM_COND, DENSITY, "CENTRE")
+        convergence(centre_solver,quad=False, cross_diff=False, upwind=False)
     plt.show()
     
 if __name__ == '__main__':
