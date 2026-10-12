@@ -31,7 +31,7 @@ PHI_0 = 1.
 PHI_L = 0.
 L_EX = 1.0 # m
 GAMMA = 0.1 # kg/(ms)
-RHO_U_I = -0.1 # kg/(m²s)
+RHO_U_I = 2.1 # kg/(m²s)
 RHO_U_II = 2.5 # kg/(m²s)
 sol_analytique_5_1i = lambda x: PHI_0 + (np.exp(RHO_U_I * x / GAMMA) - 1) / \
     (np.exp(RHO_U_I * L_EX / GAMMA) - 1) * (PHI_L - PHI_0)
@@ -146,7 +146,7 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True, th
             solver.iterate()
         else:
             solver.solve(first_iter=True)
-        err = np.linalg.norm(solver.phi - exact_sol, axis=0)
+        err = solver.phi - exact_sol
         rms = np.sqrt(np.average(err**2))
         epsilon2.append(rms)
         h_list.append(solver.get_h())
@@ -238,28 +238,24 @@ def ex5_1i(quad=True, cross_diff=False, method="UPWIND"):
 
     # Tracé des résultats par VFM et la solution analytique
     
+
     exact_sol = np.array(sol_analytique_5_1i(solver.centres[:,0]))
     fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    ax.scatter(solver.centres[:,0], solver.centres[:,1], exact_sol, label="analytique")
-    ax.scatter(solver.centres[:,0], solver.centres[:,1], solver.phi, label="numérique")
-    # plt.plot(solver.centres[:,1], solver.phi, '.')
+    # ax = fig.add_subplot(projection='3d')
+    # ax.scatter(solver.centres[:,0], solver.centres[:,1], exact_sol, label="analytique")
+    # ax.scatter(solver.centres[:,0], solver.centres[:,1], solver.phi, label="numérique")
+    # plt.plot(solver.centres[:,0], exact_sol, '-')
     # plt.quiver(solver.centres[:,0], solver.centres[:,1],
     #            solver.phi()[:,0], solver.get_grad()[:,1])
     # plt.xlabel("x")
     # plt.ylabel("y")
     # plt.legend()
-    # x = np.linspace(0, L_EX, N_ANALYTIQUE)
-    # plt.plot(x, sol_analytique_5_1i(x), label="Solution analytique")
+    x = np.linspace(0, L_EX, 200)
+    plt.plot(x, sol_analytique_5_1i(x), label="Solution analytique")
     # for n in N_LIST_PLOT:
     #     param.n = n
     #     X, T = solve(param)
     #     plt.plot(X, T, label=f"n = {n}")
-    plt.xlabel("x (m)")
-    plt.ylabel("Φ")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig("./figures/ex5_1i.pdf")
     
     h_list = []
     epsilon2 = []
@@ -272,15 +268,25 @@ def ex5_1i(quad=True, cross_diff=False, method="UPWIND"):
             mesh_parameters["lc"] = L_EX/n
         solver.set_mesh(mesher.rectangle([0,L_EX,0,L_EX], mesh_parameters), bc_list)
         exact_sol = np.array(sol_analytique_5_1i(solver.centres[:,0]))
+        x_slice = (solver.centres[:,1] > 0.49 * L_EX) & (solver.centres[:,1] < 0.51 * L_EX)
         if cross_diff:
             solver.iterate()
         else:
             solver.solve(first_iter=True)
-        err = np.linalg.norm(solver.phi - exact_sol, axis=0)
+        plt.plot(solver.centres[x_slice,0], solver.phi[x_slice], ".", label=f"n = {n}")
+        # err = np.linalg.norm(solver.phi - exact_sol, axis=0)
+        err = solver.phi - exact_sol
         rms = np.sqrt(np.average(err**2))
+        # print(rms)
         epsilon2.append(rms)
         h_list.append(solver.get_h())
+        # h_list.append(1/n)
 
+    plt.xlabel("x (m)")
+    plt.ylabel("Φ")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("./figures/ex5_1i.pdf")
     # Tracer l'erreur
     plt.figure()
     # plt.plot(L/np.array(N_LIST), epsilon2)
@@ -304,15 +310,15 @@ def ex5_1i(quad=True, cross_diff=False, method="UPWIND"):
 def main():    
     ex5_1i()
     ex5_1i(method="CENTRE")
-    # upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
-    # convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
-    # centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
-    # convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
-    for k in [1,10,100, 1000]:
-        upwind_solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
-        convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
-        centre_solver = init_solver(False, THERM_COND, DENSITY, "CENTRE")
-        convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+    upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
+    convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
+    centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
+    convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+    # for k in [1,10,100, 1000]:
+    #     upwind_solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
+    #     convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
+    #     centre_solver = init_solver(False, THERM_COND, DENSITY, "CENTRE")
+    #     convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
     plt.show()
     
 if __name__ == '__main__':
