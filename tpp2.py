@@ -165,9 +165,9 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True, th
     # p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(N_LIST[-2]/N_LIST[-1]))
     p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(h_list[-1]/h_list[-2]))
     if upwind:
-        print(f"Ordre de convergence (Upwind) : {p:.5f}")
+        print(f"Ordre de convergence (Upwind, k = {therm_cond}) : {p:.5f}")
     else:
-        print(f"Ordre de convergence (centré) : {p:.5f}")
+        print(f"Ordre de convergence (centré, k = {therm_cond}) : {p:.5f}")
 
 
     # Tracer l'erreur
@@ -185,17 +185,17 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True, th
     # plt.xlim([0.005, 0.5])
     
     if upwind and quad:
-        plt.savefig("./figures/mms_upwind_quad_rms.pdf")
+        plt.savefig(f"./figures/mms_upwind_quad_rms_k{therm_cond}.pdf")
     elif upwind and cross_diff:
-        plt.savefig("./figures/mms_upwind_tri_cd_rms.pdf")
+        plt.savefig(f"./figures/mms_upwind_tri_cd_rms_k{therm_cond}.pdf")
     elif upwind:
-        plt.savefig("./figures/mms_upwind_tri_nocd_rms.pdf")
+        plt.savefig(f"./figures/mms_upwind_tri_nocd_rms_k{therm_cond}.pdf")
     elif quad:
-        plt.savefig("./figures/mms_centre_quad_rms.pdf")
+        plt.savefig(f"./figures/mms_centre_quad_rms_k{therm_cond}.pdf")
     elif cross_diff:
-        plt.savefig("./figures/mms_centre_tri_cd_rms.pdf")
+        plt.savefig(f"./figures/mms_centre_tri_cd_rms_k{therm_cond}.pdf")
     else:
-        plt.savefig("./figures/mms_centre_tri_nocd_rms.pdf")
+        plt.savefig(f"./figures/mms_centre_tri_nocd_rms_k{therm_cond}.pdf")
 
 def ex5_1i(quad=True, cross_diff=False, method="UPWIND"):
     mesher = MeshGenerator()
