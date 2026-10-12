@@ -13,7 +13,7 @@ plt.rcParams["figure.figsize"] = [8.5, 8.5]
 
 # Différentes tailles de cellules pour calculer l'erreur
 CELL_LENGTHS = [0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005]
-N_LIST = [2, 5, 10, 20]
+N_LIST = [2, 5, 10, 20, 50, 100]
 
 # Constantes
 N = 25 # nombre d'éléments pour le maillage triangle

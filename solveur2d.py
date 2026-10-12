@@ -110,7 +110,7 @@ class Solver_2D:
         if self.velocity_func is not None:
              self.set_velocity_field()
         else:
-            self.velocity = None
+            self.face_velocity = None
 
         if bc_list:
             if len(bc_list) != self.mesh.number_of_boundaries:
@@ -212,7 +212,7 @@ class Solver_2D:
                 B[idx_d] += -cross_diff[idx_f]
     
     def set_conv(self, B, first_iter:bool) -> None:
-        conv_cnsts = self.density * np.sum(self.normal * self.velocity, axis=1) * self.face_size
+        face_fluxes = self.density * np.sum(self.normal * self.face_velocity, axis=1) * self.face_size
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             # Coefficients pour les cellules aux frontières
             if idx_f < self.mesh.number_of_boundary_faces:
@@ -223,35 +223,39 @@ class Solver_2D:
                             bc_val = bc.val(*self.right_centres[idx_f])
                         else:
                             bc_val = bc.val
-                        B[idx_g] += bc_val * max(-conv_cnsts[idx_f],0)
+                        B[idx_g] += bc_val * max(-face_fluxes[idx_f],0)
                         if first_iter: # Si on est à la première itération, on caclule A
-                            self.A[idx_g,idx_g] += max(conv_cnsts[idx_f],0)
+                            self.A[idx_g,idx_g] += max(face_fluxes[idx_f],0)
                     elif bc.type is BCType.NEUMANN:
-                        B[idx_g] += conv_cnsts[idx_f] * bc.val * self.p_nksi[idx_f] * self.d_ksi[idx_f] # TODO: à checker
+                        B[idx_g] += min(face_fluxes[idx_f], 0) * bc.val * self.p_nksi[idx_f] * self.d_ksi[idx_f] # TODO: à checker
                         if first_iter: # Si on est à la première itération, on caclule A
-                            self.A[idx_g,idx_g] += max(conv_cnsts[idx_f],0) # TODO: ou juste F_i ??
+                            self.A[idx_g,idx_g] += max(face_fluxes[idx_f],0) # TODO: ou juste F_i ??
                 elif self.schema == "CENTRE": # TODO: retrouver les coeffs pour centre en 2D
                     if bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
-                        B[idx_g] += 0
+                        if bc.type is BCType.DIRICHLET_FUNC:
+                            bc_val = bc.val(*self.right_centres[idx_f])
+                        else:
+                            bc_val = bc.val
+                        B[idx_g] += bc_val * face_fluxes[idx_f]
                         if first_iter: # Si on est à la première itération, on caclule A
                             self.A[idx_g,idx_g] += 0
                     elif bc.type is BCType.NEUMANN:
-                        B[idx_g] += 0
+                        B[idx_g] += face_fluxes[idx_f] * bc.val * self.p_nksi[idx_f] * self.d_ksi[idx_f] / 2. # TODO: à checker
                         if first_iter: # Si on est à la première itération, on caclule A
-                            self.A[idx_g,idx_g] += 0
+                            self.A[idx_g,idx_g] += face_fluxes[idx_f] / 2. # TODO: ou juste F_i ??
             # Coefficients pour les cellules intérieurs    
             else:
                 if first_iter: # Si on est à la première itération, on caclule A
                     if self.schema == "CENTRE":
-                        self.A[idx_g,idx_g] += conv_cnsts[idx_f] / 2
-                        self.A[idx_d,idx_d] += - conv_cnsts[idx_f] / 2
-                        self.A[idx_g,idx_d] += conv_cnsts[idx_f] / 2
-                        self.A[idx_d,idx_g] += -conv_cnsts[idx_f] / 2
+                        self.A[idx_g,idx_g] += face_fluxes[idx_f] / 2
+                        self.A[idx_d,idx_d] += - face_fluxes[idx_f] / 2
+                        self.A[idx_g,idx_d] += face_fluxes[idx_f] / 2
+                        self.A[idx_d,idx_g] += -face_fluxes[idx_f] / 2
                     elif self.schema == "UPWIND":
-                        self.A[idx_g,idx_g] += max(conv_cnsts[idx_f],0)
-                        self.A[idx_d,idx_d] += max(-conv_cnsts[idx_f],0)
-                        self.A[idx_g,idx_d] += - max(-conv_cnsts[idx_f],0)
-                        self.A[idx_d,idx_g] += - max(conv_cnsts[idx_f],0)
+                        self.A[idx_g,idx_g] += max(face_fluxes[idx_f],0)
+                        self.A[idx_d,idx_d] += max(-face_fluxes[idx_f],0)
+                        self.A[idx_g,idx_d] += - max(-face_fluxes[idx_f],0)
+                        self.A[idx_d,idx_g] += - max(face_fluxes[idx_f],0)
 
     def solve(self, first_iter: bool):
         """
@@ -352,7 +356,8 @@ class Solver_2D:
         """
         if func is not None:
             self.source_func = func
-        self.source = np.array([self.source_func(x, y) for (x, y) in self.centres])
+        # self.source = np.array([self.source_func(x, y) for (x, y) in self.centres])
+        self.source = self.source_func(self.centres[:,0], self.centres[:,1])
 
         self.grad = None # Pourquoi le mettre ici ? C'est déja dans solve
 
@@ -374,7 +379,7 @@ class Solver_2D:
         if func is not None:
             self.velocity_func = func
         centres_faces = (self.faces_start + self.faces_end) / 2
-        self.velocity = np.array([self.velocity_func(x, y) for (x, y) in centres_faces]) 
+        self.face_velocity = np.array([self.velocity_func(x, y) for (x, y) in centres_faces]) 
 
         # Reset gradient as it is no longer valid
         self.grad = None
