@@ -165,11 +165,12 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True):
 
 
 
-def main():    
-    upwind_solver = init_solver(True, THERM_COND, DENSITY, "UPWIND")
-    convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
-    centre_solver = init_solver(True, THERM_COND, DENSITY, "CENTRE")
-    convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+def main():   
+    for k in [1,10,100,1000]:
+        upwind_solver = init_solver(True, k, DENSITY, "UPWIND")
+        convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
+        centre_solver = init_solver(True, k, DENSITY, "CENTRE")
+        convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
     plt.show()
     
 if __name__ == '__main__':
