@@ -137,15 +137,140 @@ B[T_g] + &= \phi_D D_i + S_{DC,i} + max(-F_i,0) \phi_D
 
 Cependant, attention, les valeurs de $D_i$ et $F_i$ à la frontière changent légèrement pour utiliser la distance selon l'axe $\xi$ entre le centre de l'élément et le milieu de l'arrête frontière. $\phi_D$ est la valeur de la condition sur la frontière. Dans le cas d'une condition de Dirichlet constante, le terme $S_{DC,i}$ est constant.
 
+\subsection{Maillages}
+
+Les cas présentés dans cette œuvre ont été calculé avec des maillages
+quadrilatère transfini (figure~\ref{mesh_quad}) ou triangulaires (figure~\ref{mesh_tri})
+
+\begin{figure}
+	\includegraphics[width=\textwidth]{maillage_quad.png}
+ 	\caption{Maillage quadrilatère}
+	\label{mesh_quad}
+\end{figure}
+
+\begin{figure}
+	\includegraphics[width=\textwidth]{maillage_tri.png}
+	\caption{Maillage triangulaire}
+	\label{mesh_tri}
+\end{figure}
+
 \section{Résultats}
+
+\subsection{Validation avec MMS}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{mms_upwind_quad_field_k1.pdf}
+		\caption{Solution MMS avec schéma upwind vs solution numérique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		% \includegraphics[width=\textwidth]{../figures/mms_rms_tri_cross.pdf}
+		\includegraphics[width=\textwidth]{mms_upwind_quad_rms_k1.pdf}
+		\caption{Convergence observée avec schéma upwind à l'aide de
+		l'erreur RMS (Ordre de convergence: 0.9071)}
+	\end{subfigure}\\
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{mms_centre_quad_field_k1.pdf}
+		\caption{Solution MMS avec schéma centré vs solution numérique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		% \includegraphics[width=\textwidth]{../figures/mms_rms_tri_cross.pdf}
+		\includegraphics[width=\textwidth]{mms_centre_quad_rms_k1.pdf}
+		\caption{Convergence observée avec schéma centré à l'aide de
+		l'erreur RMS (Ordre de convergence: 2.00047)}
+	\end{subfigure}
+	\caption{Maillage quadrilatère avec diffusion croisée pour l'exemple MMS}
+	\label{fig:MMS_quad_cd}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{mms_upwind_tri_cd_field_k1.pdf}
+		\caption{Solution MMS avec schéma upwind vs solution numérique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		% \includegraphics[width=\textwidth]{../figures/mms_rms_tri_cross.pdf}
+		\includegraphics[width=\textwidth]{mms_upwind_tri_cd_rms_k1.pdf}
+		\caption{Convergence observée avec schéma upwind à l'aide de
+		l'erreur RMS (Ordre de convergence: 0.98812)}
+	\end{subfigure}\\
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{mms_centre_tri_cd_field_k1.pdf}
+		\caption{Solution MMS avec schéma centré vs solution numérique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{mms_centre_tri_cd_rms_k1.pdf}
+		\caption{Convergence observée avec schéma centré à l'aide de
+		l'erreur RMS (Ordre de convergence: 2.04008)}
+	\end{subfigure}
+	\caption{Maillage triangulaire sans diffusion croisée pour l'exemple MMS}
+	\label{fig:MMS_tri_no_cd}
+\end{figure}
+
+\subsection{Versteeg Exemple 5.1i)}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{ex5_1i_quad_nocd_upwind.pdf}
+		\caption{Solution analytique vs solution numérique avec un
+		schéma centré sur une coupe à $Y=H/2$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{epsilon5_1i_quad_nocd_upwind.pdf}
+		\caption{Convergence observée pour schéma centré à l'aide de
+		l'erreur RMS (0.95231)}
+	\end{subfigure} \\
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{ex5_1i_quad_nocd_centre.pdf}
+		\caption{Solution analytique vs solution numérique avec un
+		schéma centré sur une coupe à $Y=H/2$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{epsilon5_1i_quad_nocd_centre.pdf}
+		\caption{Convergence observée pour schéma centré à l'aide de
+		l'erreur RMS (1.96118)}
+	\end{subfigure}
+	\caption{Maillage quadrilatère pour l'exemple 5.1i)}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{ex5_1i_tri_cd_upwind.pdf}
+		\caption{Solution analytique vs solution numérique avec un
+		schéma centré sur une coupe à $Y=H/2$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{epsilon5_1i_tri_cd_upwind.pdf}
+		\caption{Convergence observée pour schéma centré à l'aide de
+		l'erreur RMS (0.93727)}
+	\end{subfigure} \\
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{ex5_1i_tri_cd_centre.pdf}
+		\caption{Solution analytique vs solution numérique avec un
+		schéma centré sur une coupe à $Y=H/2$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{epsilon5_1i_tri_cd_centre.pdf}
+		\caption{Convergence observée pour schéma centré à l'aide de
+		l'erreur RMS (1.7683)}
+	\end{subfigure}
+	\caption{Maillage triangulaire pour l'exemple 5.1i)}
+\end{figure}
+
 
 \subsection{Maillage quadrilatère transfini}
 
 Le maillage utilisé est un carré de 2x2 composé de 20 éléments selon x et y, il est présenté en figure~\ref{xxxx}.
 
 Afin de faire varier le nombre de Peclet nous avons fait varier la conductivité thermique $k$.
-
-AJOUTER MAILLAGE (moi il veut pas plot for some reason)
 
 AJOUTER les savefig dans le code pour les contours et les coupes à x et y constants.
 

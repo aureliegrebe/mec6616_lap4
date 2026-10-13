@@ -15,7 +15,7 @@ plt.rc("legend", fontsize=15)
 plt.rcParams["figure.figsize"] = [8.5, 8.5]
 
 # Différentes tailles de cellules pour calculer l'erreur
-# N_LIST = [2, 5, 10, 20, 50, 100]
+# N_LIST = [5, 10, 20, 50, 100]
 N_LIST = [5, 10, 20, 50]
 
 # Constantes
@@ -32,7 +32,7 @@ PHI_0 = 1.
 PHI_L = 0.
 L_EX = 1.0 # m
 GAMMA = 0.1 # kg/(ms)
-RHO_U_I = 1.0 # kg/(m²s)
+RHO_U_I = 0.1 # kg/(m²s)
 RHO_U_II = 2.5 # kg/(m²s)
 
 def velocity (x,y):
@@ -149,7 +149,7 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True, th
         epsilon2.append(rms)
         h_list.append(solver.get_h())
 
-        if i == 1:
+        if i == 2:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             ax.scatter(solver.centres[:,0], solver.centres[:,1], exact_sol, label="analytique")
@@ -160,6 +160,18 @@ def convergence(solver: Solver_2D, quad=False, cross_diff=False, upwind=True, th
             plt.xlabel("x")
             plt.ylabel("y")
             plt.legend()
+            if upwind and quad:
+                plt.savefig(f"./figures/mms_upwind_quad_field_k{therm_cond}.pdf")
+            elif upwind and cross_diff:
+                plt.savefig(f"./figures/mms_upwind_tri_cd_field_k{therm_cond}.pdf")
+            elif upwind:
+                plt.savefig(f"./figures/mms_upwind_tri_nocd_field_k{therm_cond}.pdf")
+            elif quad:
+                plt.savefig(f"./figures/mms_centre_quad_field_k{therm_cond}.pdf")
+            elif cross_diff:
+                plt.savefig(f"./figures/mms_centre_tri_cd_field_k{therm_cond}.pdf")
+            else:
+                plt.savefig(f"./figures/mms_centre_tri_nocd_field_k{therm_cond}.pdf")
 
     # p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(N_LIST[-2]/N_LIST[-1]))
     p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(h_list[-1]/h_list[-2]))
@@ -203,7 +215,7 @@ def ex5_1i(quad=True, cross_diff=False, method="UPWIND", peclet=None):
     else:
         gamma = GAMMA
     solver = init_solver(quad, gamma, 1, method)
-    if peclet <= 709: # approx log of highest 64 bit float
+    if peclet is None or (peclet <= 709): # approx log of highest 64 bit float
         sol_analytique_5_1i = lambda x: PHI_0 + (np.exp(RHO_U_I * x / gamma) - 1) / \
             (np.exp(RHO_U_I * L_EX / gamma) - 1) * (PHI_L - PHI_0)
     else:
@@ -332,12 +344,20 @@ def main():
     
     plotter = MeshPlotter()
 
-    # ex5_1i()
-    # ex5_1i(method="CENTRE")
+    ex5_1i()
+    ex5_1i(method="CENTRE")
+    # ex5_1i(quad=False, cross_diff=True)
+    # ex5_1i(quad=False, cross_diff=True, method="CENTRE")
     # upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
     # convergence(upwind_solver,quad=True, cross_diff=False, upwind=True)
     # centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
     # convergence(centre_solver,quad=True, cross_diff=False, upwind=False)
+
+    # tri
+    # upwind_solver = init_solver(False, 1, DENSITY, "UPWIND")
+    # convergence(upwind_solver,quad=False, cross_diff=True, upwind=True)
+    # centre_solver = init_solver(False, 1, DENSITY, "CENTRE")
+    # convergence(centre_solver,quad=False, cross_diff=True, upwind=False)
     
     # # Maillage quadrilatère transfini
     # for k in [1,10,100, 1000]:
@@ -349,22 +369,19 @@ def main():
     # plotter.plot_mesh(centre_solver)
 
     # Maillage quadrilatère transfini
-    for peclet in [1,100,10000]:
-        ex5_1i(quad=True, cross_diff=False, method="UPWIND", peclet=peclet)
-        ex5_1i(quad=True, cross_diff=False, method="CENTRE", peclet=peclet)
-    centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
-    plotter.plot_mesh(centre_solver.mesh)
+    # for peclet in [1,100,10000]:
+    #     ex5_1i(quad=True, cross_diff=False, method="UPWIND", peclet=peclet)
+    #     ex5_1i(quad=True, cross_diff=False, method="CENTRE", peclet=peclet)
+    # centre_solver = init_solver(True, 1, DENSITY, "CENTRE")
+    # plotter.plot_mesh(centre_solver.mesh)
 
     
     # Maillage triangulaire
-    # for k in [1,10,100, 1000]:
-    #     upwind_solver = init_solver(False, k, DENSITY, "UPWIND")
-    #     convergence(upwind_solver,quad=False, cross_diff=True, upwind=True, therm_cond = k)
-    #     centre_solver = init_solver(False, k, DENSITY, "CENTRE")
-    #     convergence(centre_solver,quad=False, cross_diff=True, upwind=False, therm_cond = k)
-    # plt.show()
-    centre_solver = init_solver(False, 1, DENSITY, "CENTRE")
-    plotter.plot_mesh(centre_solver.mesh)
+    # for peclet in [1,100,10000]:
+    #     ex5_1i(quad=False, cross_diff=True, method="UPWIND", peclet=peclet)
+    #     ex5_1i(quad=False, cross_diff=True, method="CENTRE", peclet=peclet)
+    # centre_solver = init_solver(False, 1, DENSITY, "CENTRE")
+    # plotter.plot_mesh(centre_solver.mesh)
     plt.show()
     
 if __name__ == '__main__':
