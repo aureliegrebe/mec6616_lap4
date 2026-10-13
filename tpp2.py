@@ -344,8 +344,8 @@ def main():
     
     plotter = MeshPlotter()
 
-    ex5_1i()
-    ex5_1i(method="CENTRE")
+    # ex5_1i()
+    # ex5_1i(method="CENTRE")
     # ex5_1i(quad=False, cross_diff=True)
     # ex5_1i(quad=False, cross_diff=True, method="CENTRE")
     # upwind_solver = init_solver(True, 1, DENSITY, "UPWIND")
@@ -377,9 +377,9 @@ def main():
 
     
     # Maillage triangulaire
-    # for peclet in [1,100,10000]:
-    #     ex5_1i(quad=False, cross_diff=True, method="UPWIND", peclet=peclet)
-    #     ex5_1i(quad=False, cross_diff=True, method="CENTRE", peclet=peclet)
+    for peclet in [1,100,10000]:
+        ex5_1i(quad=False, cross_diff=True, method="UPWIND", peclet=peclet)
+        ex5_1i(quad=False, cross_diff=True, method="CENTRE", peclet=peclet)
     # centre_solver = init_solver(False, 1, DENSITY, "CENTRE")
     # plotter.plot_mesh(centre_solver.mesh)
     plt.show()
