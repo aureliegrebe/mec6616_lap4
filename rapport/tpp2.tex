@@ -47,6 +47,7 @@ la méthode de résolution, nous analyserons les résultats à l'aide de différ
 L'équation de convection-diffusion stationnaire est la suivante:
 \begin{equation} 
 \frac{\partial {(uT)}}{\partial x} + \frac{\partial {(vT)}}{\partial y} - k \left(\frac{\partial^2 {T}}{\partial^2 x} + \frac{\partial^2 {T}}{\partial^2 y} \right) = S
+\label{eq:conv_diff}
 \end{equation}
 
 L'équation est exprimée en forme matricielle par: $A\phi = B$
@@ -158,6 +159,29 @@ quadrilatère transfini (figure~\ref{mesh_quad}) ou triangulaires (figure~\ref{m
 
 \subsection{Validation avec MMS}
 
+On a valider le solveur à l'aide de la méthode des solutions manufacturiées.
+On suppose le champ de vitesse:
+\begin{equation}
+	\vec{u} = (2x^2 - x^4 - 1)(y - y^3)\hat{i} + 
+	(2y^2 - y^4 - 1)(y - y^3) \hat{j}
+\end{equation}
+
+On suppose le champ de solution suivante:
+\begin{equation}
+	T_{mmx}(x, y) = T_0 + T_x \cos(\pi x) + T_{xy} \sin(\pi xy)
+	\label{eq:sol_mms}
+\end{equation}
+où $T_0 = 400$, $T_x=50$ et $T_xy=100$. En insérant l'équation~\ref{eq:sol_mms}
+dans l'équation~\ref{eq:conv_diff}, on obtient la fonction source qu'il faut
+imposer:
+\begin{multline}
+	S(x, y) = \pi \left( 50 \pi k \left(2x^2\sin(\pi xy) \\
+		+ 2y^2\sin(\pi xy) + \cos(\pi x) \right)\\ 
+		- 100 x^2 \left(x^2 - 1\right)\left(y^4 - 2y^2 + 1\right)\cos(\pi xy)\\
+		+ 50y\left(y^2 - 1\right)\left( 2y\cos(\pi xy) - \sin(\pi x) \right)
+		\left(x^4 - 22^2 + 1 \right) \right)
+\end{multline}
+
 \begin{figure}
 	\begin{subfigure}[t]{0.48\textwidth}
 		\includegraphics[width=\textwidth]{mms_upwind_quad_field_k1.pdf}
@@ -213,6 +237,9 @@ quadrilatère transfini (figure~\ref{mesh_quad}) ou triangulaires (figure~\ref{m
 
 \subsection{Versteeg Exemple 5.1i)}
 
+On a adapté l'exemple 5.1i) de Versteeg en 2D avec des frontières de Dirichlet
+sur deux cotés et des frontières de Neumann sur les deux autres.
+
 \begin{figure}
 	\begin{subfigure}[t]{0.48\textwidth}
 		\includegraphics[width=\textwidth]{ex5_1i_quad_nocd_upwind.pdf}
@@ -266,6 +293,11 @@ quadrilatère transfini (figure~\ref{mesh_quad}) ou triangulaires (figure~\ref{m
 \end{figure}
 
 \subsection{Variation de nombre de Peclet}
+
+On varie également le nombre de Peclet on variant la conductivité thermique:
+\begin{equation}
+	k = \frac{Lu}{Pe}
+\end{equation}
 
 \begin{figure}
 	\centering
