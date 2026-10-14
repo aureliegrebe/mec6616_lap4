@@ -34,7 +34,8 @@ class Solver_FVM:
                  u_bc_list: List[BC] = [],
                  source_func: Optional[Callable[[float, float], [float, float]]] = None,
                  pressure_func: Optional[Callable[[float, float], float]] = None,
-                 velocity_func: Optional[Callable[[float, float], [float, float]]] = None
+                 velocity_func: Optional[Callable[[float, float], [float, float]]] = None,
+                 alpha: float = 0.5
                  ) -> None:
         # variables
         self.u = None # velocity field
@@ -44,6 +45,7 @@ class Solver_FVM:
         self.velocity_func = velocity_func
         self.density = density
         self.viscosity = viscosity
+        self.alpha = alpha
 
 
         self.set_mesh(mesh, p_bc_list, u_bc_list)
@@ -103,10 +105,9 @@ class Solver_FVM:
                 raise ValueError("Incorrect number of boundaries")
             self.u_bc_list = u_bc_list
         else:
-            self.u_bc_list = [BC(None, None) for _ in 
+            self.u_bc_list = [[BC(None, None), BC(None, None)] for _ in 
                 range(self.mesh.number_of_boundaries)]
 
-        self.gradp = None
 
     def calculate_areas(self):
         """
@@ -191,26 +192,35 @@ class Solver_FVM:
 
             # under relaxation
             self.u_old = self.u
-            self.u = 0.5 * self.u_old + 0.5 * u_new
+            self.u = self.alpha * self.u_old + (1 - self.alpha) * u_new
 
             iter += 1
 
     def calc_p_source(self):
-        self.sgp  = self.get_gradp().T * self.areas
+        self.sgp = (self.get_gradp().T * self.areas).T
 
     def calc_flux(self):
         self.face_velocity = np.zeros([self.mesh.number_of_faces, 2])
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             if idx_f < self.mesh.number_of_boundary_faces:
-                u_bc = self.u_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
+                u_bc = self.u_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)][0]
+                v_bc = self.u_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)][1]
                 if u_bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
                     if u_bc.type is BCType.DIRICHLET_FUNC:
                         u_bc_val = u_bc.val(*self.right_centres[idx_f])
                     else:
                         u_bc_val = u_bc.val
-                    self.face_velocity[idx_f] = u_bc_val
                 else:
-                    self.face_velocity[idx_f] = self.u[idx_g]
+                    u_bc_val = self.u[idx_g, 0]
+                if v_bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
+                    if v_bc.type is BCType.DIRICHLET_FUNC:
+                        v_bc_val = v_bc.val(*self.right_centres[idx_f])
+                    else:
+                        v_bc_val = v_bc.val
+                else:
+                    v_bc_val = self.u[idx_g, 1]
+                self.face_velocity[idx_f, 0] = u_bc_val 
+                self.face_velocity[idx_f, 1] = v_bc_val 
             else:
                 self.face_velocity[idx_f] = (self.u[idx_g] + self.u[idx_d])
         self.face_fluxes = self.density * np.sum(self.normal * self.face_velocity, axis=1) * self.face_size
@@ -229,11 +239,13 @@ class Solver_FVM:
     
         self.diff_coeff(self.Au, Bu, first_iter, 0) # On résoud les termes de diffusion
         self.conv_coeff(self.Au, Bu, first_iter, 0) # On résoud les termess de convexion
-        self.source_coeff(self.Au, Bu) # On ajoute les termes de source à B
+        self.source_coeff(Bu, 0) # On ajoute les termes de source à B
+        self.pressure_coeff(Bu, 0) # On ajoute les termes de source à B
 
         self.diff_coeff(self.Av, Bv, first_iter, 1) # On résoud les termes de diffusion
         self.conv_coeff(self.Av, Bv, first_iter, 1) # On résoud les termess de convexion
-        self.source_coeff(self.Av, Bu) # On ajoute les termes de source à B
+        self.source_coeff(Bv, 1) # On ajoute les termes de source à B
+        self.pressure_coeff(Bv, 1) # On ajoute les termes de source à B
 
         u = np.linalg.solve(self.Au, Bu) # On résoud l'équation encore une fois en utilisant le nouveau B
         v = np.linalg.solve(self.Av, Bv) # On résoud l'équation encore une fois en utilisant le nouveau B
@@ -259,18 +271,18 @@ class Solver_FVM:
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             # Coefficients pour les cellules aux frontières
             if idx_f < self.mesh.number_of_boundary_faces:
-                u_bc = self.u_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
+                u_bc = self.u_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)][dim]
                 if u_bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
                     if u_bc.type is BCType.DIRICHLET_FUNC:
-                        u_bc_val = u_bc.val(*self.right_centres[idx_f])[dim]
+                        u_bc_val = u_bc.val(*self.right_centres[idx_f])
                     else:
-                        u_bc_val = u_bc.val[dim]
+                        u_bc_val = u_bc.val
                     B[idx_g] += u_bc_val*diff_cnsts[idx_f]
                     if first_iter: # Si on est à la première itération, on caclule A
                         A[idx_g,idx_g] += diff_cnsts[idx_f]
                     B[idx_g] += cross_diff[idx_f]
                 elif u_bc.type is BCType.NEUMANN:
-                    B[idx_g] += self.viscosity * self.face_size[idx_f] * u_bc.val[dim]
+                    B[idx_g] += self.viscosity * self.face_size[idx_f] * u_bc.val
             # Coefficients pour les cellules intérieurs    
             else:
                 if first_iter: # Si on est à la première itération, on caclule A et pose grad(phi) = 0
@@ -286,17 +298,17 @@ class Solver_FVM:
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             # Coefficients pour les cellules aux frontières
             if idx_f < self.mesh.number_of_boundary_faces:
-                u_bc = self.u_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
+                u_bc = self.u_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)][dim]
                 if u_bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
                     if u_bc.type is BCType.DIRICHLET_FUNC:
-                        u_bc_val = u_bc.val(*self.right_centres[idx_f])[dim]
+                        u_bc_val = u_bc.val(*self.right_centres[idx_f])
                     else:
-                        u_bc_val = u_bc.val[dim]
+                        u_bc_val = u_bc.val
                     B[idx_g] += -u_bc_val * face_fluxes[idx_f] / 2
                     if first_iter: # Si on est à la première itération, on caclule A
                         A[idx_g,idx_g] += face_fluxes[idx_f] / 2
                 elif u_bc.type is BCType.NEUMANN:
-                    B[idx_g] += face_fluxes[idx_f] * u_bc.val[dim] * \
+                    B[idx_g] += face_fluxes[idx_f] * u_bc.val * \
                         self.p_nksi[idx_f] * self.d_ksi[idx_f] / 2. # TODO: à checker
                     if first_iter: # Si on est à la première itération, on caclule A
                         A[idx_g,idx_g] += face_fluxes[idx_f] / 2. # TODO: ou juste F_i ??
@@ -314,7 +326,7 @@ class Solver_FVM:
         B += self.source[:,dim] * self.areas
 
     def pressure_coeff(self, B:np.ndarray, dim:int):
-        B += self.spg[:,dim]
+        B += self.sgp[:,dim]
 
 
 
@@ -376,6 +388,7 @@ class Solver_FVM:
         if func is not None:
             self.pressure_func = func
         self.p = np.array([self.pressure_func(x, y) for (x, y) in self.centres])
+        self.gradp = None
 
 
     def get_gradp(self) -> np.ndarray:
@@ -484,18 +497,27 @@ if __name__ == "__main__":
     
     # Générer un mesh 
     mesh_parameters = {'mesh_type': 'QUAD',
-                   'Nx': 60, 'Ny':60
+                   'Nx': 30, 'Ny':30
                    }
     mesh_obj = mesher.rectangle([-1,1,-1,1], mesh_parameters)
 
-    p_func = lambda x, y: x * x + y
-    vel_func = lambda x, y: (x * x, y)
+    # p_func = lambda x, y: x * x + y
+    p_func = lambda x, y: y
+    # vel_func = lambda x, y: (x * x, y)
+    vel_func = lambda x, y: (0, 0)
+
+    # u_bc_list = [
+    #     BC(BCType.NEUMANN, (0,0)),
+    #     BC(BCType.DIRICHLET, (0,0)),
+    #     BC(BCType.NEUMANN, (0,0)),
+    #     BC(BCType.DIRICHLET, (1, 0)),
+    # ]
 
     u_bc_list = [
-        BC(BCType.NEUMANN, (0,0)),
-        BC(BCType.DIRICHLET, (0,0)),
-        BC(BCType.NEUMANN, (0,0)),
-        BC(BCType.DIRICHLET, (1, 0)),
+        [BC(BCType.NEUMANN, 0), BC(BCType.NEUMANN, 0)],
+        [BC(BCType.NEUMANN, 0), BC(BCType.NEUMANN, 0)],
+        [BC(BCType.NEUMANN, 0), BC(BCType.NEUMANN, 0)],
+        [BC(BCType.NEUMANN, 0), BC(BCType.DIRICHLET, 0)],
     ]
 
     p_bc_list = [
@@ -506,13 +528,13 @@ if __name__ == "__main__":
     ]
 
     solver = Solver_FVM(mesh_obj, 1, 1, p_bc_list, u_bc_list,
-                        pressure_func=p_func, velocity_func=vel_func)
-
-    plt.figure()
-    plt.quiver(solver.centres[:,0], solver.centres[:,1],
-                   solver.get_gradp()[:,0], solver.get_gradp()[:,1])
+                        pressure_func=p_func, velocity_func=vel_func, alpha=0.5)
 
     solver.solve()
+    plt.figure()
+    plt.quiver(solver.centres[:,0], solver.centres[:,1],
+                   solver.sgp[:,0], solver.sgp[:,1])
+
     plt.figure()
     plt.quiver(solver.centres[:,0], solver.centres[:,1],
                    solver.u[:,0], solver.u[:,1])
