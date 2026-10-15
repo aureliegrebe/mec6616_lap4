@@ -9,7 +9,7 @@ from cycler import cycler
 import matplotlib.pyplot as plt
 from solveurFVM import Solver_FVM, BC, BCType
 
-N = 20
+N = 10
 U = 1
 
 def couette(p_fac, theta = 0, quad=True, cross_diff=False):
@@ -54,20 +54,21 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     plt.figure()
     plt.quiver(solver.centres[:,0], solver.centres[:,1],
                    solver.u[:,0], solver.u[:,1])
-
-    start_slice = (solver.centres[:,0] < 0.05 )
-    mid_slice = (solver.centres[:,0] > 0.45 ) & (solver.centres[:,0] < 0.55)
-    end_slice = (solver.centres[:,0] > 0.98 )
+    turned_x = (solver.centres[:,0]*np.cos(theta) + solver.centres[:,1]*np.sin(theta) )
+    turned_y = (-solver.centres[:,0]*np.sin(theta) + solver.centres[:,1]*np.cos(theta) )
+    start_slice = (turned_x < 0.05 )
+    mid_slice = (turned_x > 0.45 ) & (turned_x < 0.55)
+    end_slice = (turned_x > 0.98 )
     plt.figure()
-    plt.plot(solver.centres[start_slice,1], solver.u[start_slice, 0], ".", label=f"début")
-    plt.plot(solver.centres[mid_slice,1], solver.u[mid_slice, 0], "*", label=f"milieu")
-    plt.plot(solver.centres[end_slice,1], solver.u[end_slice, 0], "x", label=f"fin")
+    plt.plot(turned_y[start_slice], solver.u[start_slice, 0], ".", label=f"début")
+    plt.plot(turned_y[mid_slice], solver.u[mid_slice, 0], "*", label=f"milieu")
+    plt.plot(turned_y[end_slice], solver.u[end_slice, 0], "x", label=f"fin")
     plt.legend()
 
 
 
 def main():
-    couette(-3, quad=False, cross_diff=True)
+    # couette(-3, quad=False, cross_diff=True)
     couette(-3,0.5)
     # couette(1)
     # couette(-6)
