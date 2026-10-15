@@ -10,7 +10,6 @@ from mesh.mesh import Mesh
 from mesh.meshConnectivity import MeshConnectivity
 from mesh.meshGenerator import MeshGenerator
 from mesh.meshPlotter import MeshPlotter
-from solveur2d import Solver_2D
 
 # TODO: Add source term
 
@@ -180,21 +179,35 @@ class Solver_FVM:
             self.centres[i, 0] = c_x / self.areas[i] / 6.
             self.centres[i, 1] = c_y / self.areas[i] / 6.
 
-    def solve(self):
-        iter_max = 10
+    def solve(self, iter_max=100, res_max=1e-3):
+        nb_elem = self.mesh.number_of_elements
+        self.bu = np.zeros(nb_elem) # On ré-initialise B à chaque itération
+        self.bv = np.zeros(nb_elem) # On ré-initialise B à chaque itération
         
         self.calc_p_source()
         # TODO: add convergence criteria
         iter = 0;
+        u_res = v_res = 100
         while (iter < iter_max):
             self.calc_flux()
             u_new = self.solve_momentum()
+            if iter > 1:
+                u_res, v_res = self.residual()
+                print(f"i: {iter-1}\t\tu residual: \t{u_res}\t\tv_residual: \t{v_res}")
 
             # under relaxation
             self.u_old = self.u
             self.u = self.alpha * self.u_old + (1 - self.alpha) * u_new
+            if (u_res < res_max) & (v_res < res_max):
+                break
 
             iter += 1
+
+    def residual(self):
+        u_residual = np.linalg.norm(np.matmul(self.Au, self.u_old[:,0]) - self.bu_old)
+        v_residual = np.linalg.norm(np.matmul(self.Av, self.u_old[:,1]) - self.bv_old)
+        return u_residual, v_residual
+
 
     def calc_p_source(self):
         self.sgp = (self.get_gradp().T * self.areas).T
@@ -249,8 +262,10 @@ class Solver_FVM:
 
         u = np.linalg.solve(self.Au, Bu) # On résoud l'équation encore une fois en utilisant le nouveau B
         v = np.linalg.solve(self.Av, Bv) # On résoud l'équation encore une fois en utilisant le nouveau B
-        # self.b_old = self.b # On stocke le B de l'itération précédente
-        # self.b = B # On définit le B de cette itération
+        self.bu_old = self.bu # On stocke le B de l'itération précédente
+        self.bu = Bu # On définit le B de cette itération
+        self.bv_old = self.bv # On stocke le B de l'itération précédente
+        self.bv = Bv # On définit le B de cette itération
         return np.stack([u, v], axis=-1)
 
     def diff_coeff(self, A, B, first_iter: bool, dim: int) -> None:
@@ -326,7 +341,7 @@ class Solver_FVM:
         B += self.source[:,dim] * self.areas
 
     def pressure_coeff(self, B:np.ndarray, dim:int):
-        B += self.sgp[:,dim]
+        B -= self.sgp[:,dim]
 
 
 
