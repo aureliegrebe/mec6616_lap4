@@ -34,7 +34,8 @@ class Solver_FVM:
                  source_func: Optional[Callable[[float, float], [float, float]]] = None,
                  pressure_func: Optional[Callable[[float, float], float]] = None,
                  velocity_func: Optional[Callable[[float, float], [float, float]]] = None,
-                 alpha: float = 0.5
+                 alpha: float = 0.5,
+                 cross_diff_iter: int = 1,
                  ) -> None:
         # variables
         self.u = None # velocity field
@@ -45,6 +46,7 @@ class Solver_FVM:
         self.density = density
         self.viscosity = viscosity
         self.alpha = alpha
+        self.cross_diff_iter = cross_diff_iter
 
 
         self.set_mesh(mesh, p_bc_list, u_bc_list)
@@ -243,40 +245,45 @@ class Solver_FVM:
 
     def solve_momentum(self):
         first_iter=True
-        nb_elem = self.mesh.number_of_elements
-        Bu = np.zeros(nb_elem) # On ré-initialise B à chaque itération
-        Bv = np.zeros(nb_elem) # On ré-initialise B à chaque itération
+
+        u = v = None
+        for cd_iter in range(self.cross_diff_iter):
+            nb_elem = self.mesh.number_of_elements
+            Bu = np.zeros(nb_elem) # On ré-initialise B à chaque itération
+            Bv = np.zeros(nb_elem) # On ré-initialise B à chaque itération
+            
+            if first_iter:
+                self.Au = np.zeros((nb_elem, nb_elem))
+                self.Av = np.zeros((nb_elem, nb_elem))
         
-        if first_iter:
-            self.Au = np.zeros((nb_elem, nb_elem))
-            self.Av = np.zeros((nb_elem, nb_elem))
-    
-        self.diff_coeff(self.Au, Bu, first_iter, 0) # On résoud les termes de diffusion
-        self.conv_coeff(self.Au, Bu, first_iter, 0) # On résoud les termess de convexion
-        self.source_coeff(Bu, 0) # On ajoute les termes de source à B
-        self.pressure_coeff(Bu, 0) # On ajoute les termes de source à B
+            self.diff_coeff(self.Au, Bu, first_iter, 0, u) # On résoud les termes de diffusion
+            self.conv_coeff(self.Au, Bu, first_iter, 0) # On résoud les termess de convexion
+            self.source_coeff(Bu, 0) # On ajoute les termes de source à B
+            self.pressure_coeff(Bu, 0) # On ajoute les termes de source à B
 
-        self.diff_coeff(self.Av, Bv, first_iter, 1) # On résoud les termes de diffusion
-        self.conv_coeff(self.Av, Bv, first_iter, 1) # On résoud les termess de convexion
-        self.source_coeff(Bv, 1) # On ajoute les termes de source à B
-        self.pressure_coeff(Bv, 1) # On ajoute les termes de source à B
+            self.diff_coeff(self.Av, Bv, first_iter, 1, v) # On résoud les termes de diffusion
+            self.conv_coeff(self.Av, Bv, first_iter, 1) # On résoud les termess de convexion
+            self.source_coeff(Bv, 1) # On ajoute les termes de source à B
+            self.pressure_coeff(Bv, 1) # On ajoute les termes de source à B
 
-        u = np.linalg.solve(self.Au, Bu) # On résoud l'équation encore une fois en utilisant le nouveau B
-        v = np.linalg.solve(self.Av, Bv) # On résoud l'équation encore une fois en utilisant le nouveau B
+            u = np.linalg.solve(self.Au, Bu) # On résoud l'équation encore une fois en utilisant le nouveau B
+            v = np.linalg.solve(self.Av, Bv) # On résoud l'équation encore une fois en utilisant le nouveau B
+            first_iter = False
         self.bu_old = self.bu # On stocke le B de l'itération précédente
         self.bu = Bu # On définit le B de cette itération
         self.bv_old = self.bv # On stocke le B de l'itération précédente
         self.bv = Bv # On définit le B de cette itération
         return np.stack([u, v], axis=-1)
 
-    def diff_coeff(self, A, B, first_iter: bool, dim: int) -> None:
+    def diff_coeff(self, A, B, first_iter: bool, dim: int, u=None) -> None:
         diff_cnsts = self.viscosity/self.p_nksi*self.face_size/self.d_ksi
-        if first_iter:
-            grad_phi = np.zeros([self.mesh.number_of_faces, 2])
+        if u is not None:
+            grad_u = self.calc_grad(u, [pair[dim] for pair in self.u_bc_list])
         else:
-            # TODO: fix this
-            left_grad_phi = self.get_grad()[self.mesh.face_to_elements[:,0]]
-            right_grad_phi = self.get_grad()[self.mesh.face_to_elements[:,1]]
+            grad_phi = grad_u = np.zeros([self.mesh.number_of_faces, 2])
+        if not first_iter:
+            left_grad_phi = grad_u[self.mesh.face_to_elements[:,0]]
+            right_grad_phi = grad_u[self.mesh.face_to_elements[:,1]]
             grad_phi = 0.5 * (left_grad_phi + right_grad_phi)
             nbf = self.mesh.number_of_boundary_faces
             grad_phi[:nbf] = left_grad_phi[:nbf]
@@ -343,8 +350,6 @@ class Solver_FVM:
 
     def pressure_coeff(self, B:np.ndarray, dim:int):
         B -= self.sgp[:,dim]
-
-
 
     def set_velocity_field(self, 
                          func: Optional[Callable[[float, float],[float, float]]]=None

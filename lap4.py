@@ -45,6 +45,9 @@ def couette(p_fac,quad=True, cross_diff=False):
     solver = Solver_FVM(mesh_obj, 1, 1, p_bc_list, u_bc_list,
                         pressure_func=p_func, alpha=0.7)
 
+    if cross_diff:
+        solver.cross_diff_iter = 5
+
     # plotter.plot_mesh(mesh_obj, label_faces=True)
 
     solver.solve(iter_max=500, res_max=1e-5)
@@ -54,7 +57,7 @@ def couette(p_fac,quad=True, cross_diff=False):
 
     start_slice = (solver.centres[:,0] < 0.05 )
     mid_slice = (solver.centres[:,0] > 0.45 ) & (solver.centres[:,0] < 0.55)
-    end_slice = (solver.centres[:,0] > 0.95 )
+    end_slice = (solver.centres[:,0] > 0.98 )
     plt.figure()
     plt.plot(solver.centres[start_slice,1], solver.u[start_slice, 0], ".", label=f"début")
     plt.plot(solver.centres[mid_slice,1], solver.u[mid_slice, 0], "*", label=f"milieu")
@@ -64,7 +67,7 @@ def couette(p_fac,quad=True, cross_diff=False):
 
 
 def main():
-    couette(-3)
+    couette(-3, quad=False, cross_diff=True)
     # couette(1)
     # couette(-6)
     plt.show()
