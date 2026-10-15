@@ -34,7 +34,8 @@ class Solver_FVM:
                  source_func: Optional[Callable[[float, float], [float, float]]] = None,
                  pressure_func: Optional[Callable[[float, float], float]] = None,
                  velocity_func: Optional[Callable[[float, float], [float, float]]] = None,
-                 alpha: float = 0.5
+                 alpha: float = 0.5,
+                 theta: float = 0
                  ) -> None:
         # variables
         self.u = None # velocity field
@@ -45,15 +46,21 @@ class Solver_FVM:
         self.density = density
         self.viscosity = viscosity
         self.alpha = alpha
+        self.theta = theta
 
 
         self.set_mesh(mesh, p_bc_list, u_bc_list)
 
+    def get_new_xycoord(self,i):
+        R = np.array([[np.cos(self.theta), -np.sin(self.theta)],
+                      [np.sin(self.theta),  np.cos(self.theta)]])
+        coord = np.array(self.mesh.get_node_to_xycoord(i))
+        new_coord = R @ coord
+        return new_coord
 
     def set_mesh(self, mesh: Mesh,
                  p_bc_list: List[BC] = [],
-                 u_bc_list: List[BC] = [],
-                 theta: float = 0
+                 u_bc_list: List[BC] = []
                  ) -> None:
         """
         Défini le maillage. Reset tout les attributs qui dépends du maillage.
@@ -118,7 +125,7 @@ class Solver_FVM:
         self.areas = np.zeros(self.mesh.number_of_elements)
         for i in range(self.mesh.number_of_elements):
             nodes = self.mesh.get_element_to_nodes(i)
-            xy_nodes = np.array([self.mesh.get_node_to_xycoord(node) for node
+            xy_nodes = np.array([self.get_new_xycoord(node) for node
                 in nodes])
             x = xy_nodes[:,0]
             y = xy_nodes[:,1]
@@ -129,9 +136,9 @@ class Solver_FVM:
         """
         Calcule des vecteurs normaux de chaque face
         """
-        self.faces_start = np.array([self.mesh.get_node_to_xycoord(idx) for idx, _ in
+        self.faces_start = np.array([self.get_new_xycoord(idx) for idx, _ in
             self.mesh.face_to_nodes])
-        self.faces_end = np.array([self.mesh.get_node_to_xycoord(idx) for _, idx in
+        self.faces_end = np.array([self.get_new_xycoord(idx) for _, idx in
             self.mesh.face_to_nodes])
         self.face_vecs = self.faces_end - self.faces_start
         self.face_size = np.linalg.norm(self.face_vecs, axis=1)
@@ -139,7 +146,7 @@ class Solver_FVM:
                                       -self.face_vecs[:,0] / self.face_size])
         self.left_centres = self.centres[self.mesh.face_to_elements[:,0]]
         self.right_centres = self.centres[self.mesh.face_to_elements[:,1]]
-
+        
         nbf = self.mesh.number_of_boundary_faces
         self.right_centres[:nbf] = self.faces_start[:nbf] + 0.5 * self.face_vecs[:nbf]
 
@@ -164,10 +171,11 @@ class Solver_FVM:
         None
         """
         self.calculate_areas()
+        areas = self.areas
         self.centres = np.zeros([self.mesh.number_of_elements, 2])
         for i in range(self.mesh.number_of_elements):
             nodes = self.mesh.get_element_to_nodes(i)
-            xy_nodes = np.array([self.mesh.get_node_to_xycoord(node) for node
+            xy_nodes = np.array([self.get_new_xycoord(node) for node
                 in nodes])
             x = xy_nodes[:,0]
             y = xy_nodes[:,1]
@@ -205,6 +213,9 @@ class Solver_FVM:
             iter += 1
 
     def residual(self):
+        Au = self.Au
+        u_old = self.u_old
+        bu_old = self.bu_old
         u_residual = np.linalg.norm(np.matmul(self.Au, self.u_old[:,0]) - self.bu_old)
         v_residual = np.linalg.norm(np.matmul(self.Av, self.u_old[:,1]) - self.bv_old)
         return u_residual, v_residual
@@ -282,7 +293,6 @@ class Solver_FVM:
             grad_phi[:nbf] = left_grad_phi[:nbf]
 
         cross_diff = -self.viscosity * self.p_ksieta/self.p_nksi*np.vecdot(grad_phi,self.e_eta, axis=1)*self.face_size
-
         # Parcours du maillage
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             # Coefficients pour les cellules aux frontières
@@ -444,8 +454,8 @@ class Solver_FVM:
             if idx_f < self.mesh.number_of_boundary_faces:
                 bc = bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
                 edge_nodes = self.mesh.get_face_to_nodes(idx_f)
-                xy_edge = (np.array(self.mesh.get_node_to_xycoord(edge_nodes[0])) +
-                    np.array(self.mesh.get_node_to_xycoord(edge_nodes[1]))) / 2
+                xy_edge = (np.array(self.get_new_xycoord(edge_nodes[0])) +
+                    np.array(self.get_new_xycoord(edge_nodes[1]))) / 2
                 dxy = self.centres[idx_g] - xy_edge
                 if bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
                     if bc.type is BCType.DIRICHLET_FUNC:
@@ -455,8 +465,8 @@ class Solver_FVM:
                     scalar_diff = field[idx_g] - bc_val
                 elif bc.type is BCType.NEUMANN:
                     # calculate edge normal
-                    edge_vec = (np.array(self.mesh.get_node_to_xycoord(edge_nodes[1])) -
-                        np.array(self.mesh.get_node_to_xycoord(edge_nodes[0])))
+                    edge_vec = (np.array(self.get_new_xycoord(edge_nodes[1])) -
+                        np.array(self.get_new_xycoord(edge_nodes[0])))
                     normal = np.array([edge_vec[1], -edge_vec[0]]) / np.linalg.norm(edge_vec) # ici le mauvais signe ?
 
                     # project centroid onto edge
@@ -558,7 +568,7 @@ if __name__ == "__main__":
     ]
 
     solver = Solver_FVM(mesh_obj, 1, 1, p_bc_list, u_bc_list,
-                        pressure_func=p_func, velocity_func=vel_func, alpha=0.5)
+                        pressure_func=p_func, velocity_func=vel_func, alpha=0.5, theta = 0.5)
 
     solver.solve()
     plt.figure()

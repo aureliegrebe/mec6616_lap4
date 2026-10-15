@@ -12,7 +12,7 @@ from solveurFVM import Solver_FVM, BC, BCType
 N = 20
 U = 1
 
-def couette(p_fac,quad=True, cross_diff=False):
+def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     mesher = MeshGenerator()
     # Générer un mesh 
     if quad: # Maillage quadratique structuré
@@ -26,13 +26,13 @@ def couette(p_fac,quad=True, cross_diff=False):
 
     plotter = MeshPlotter()
 
-    p_func = lambda x, y: -2 * p_fac * x
+    p_func = lambda x, y: -2 * p_fac * (x* np.cos(theta) + y * np.sin(theta))
 
     u_bc_list = [
         [BC(BCType.NEUMANN, 0), BC(BCType.NEUMANN, 0)],
         [BC(BCType.DIRICHLET, 0), BC(BCType.DIRICHLET, 0)],
         [BC(BCType.NEUMANN, 0), BC(BCType.NEUMANN, 0)],
-        [BC(BCType.DIRICHLET, U), BC(BCType.DIRICHLET, 0)],
+        [BC(BCType.DIRICHLET, U*np.cos(theta)), BC(BCType.DIRICHLET,U*np.sin(theta))],
     ]
 
     p_bc_list = [
@@ -43,7 +43,7 @@ def couette(p_fac,quad=True, cross_diff=False):
     ]
 
     solver = Solver_FVM(mesh_obj, 1, 1, p_bc_list, u_bc_list,
-                        pressure_func=p_func, alpha=0.7)
+                        pressure_func=p_func, alpha=0.7, theta = theta)
 
     # plotter.plot_mesh(mesh_obj, label_faces=True)
 
@@ -64,7 +64,7 @@ def couette(p_fac,quad=True, cross_diff=False):
 
 
 def main():
-    couette(-3)
+    couette(-3,0.5)
     # couette(1)
     # couette(-6)
     plt.show()
