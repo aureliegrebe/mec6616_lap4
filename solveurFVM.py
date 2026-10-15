@@ -52,7 +52,8 @@ class Solver_FVM:
 
     def set_mesh(self, mesh: Mesh,
                  p_bc_list: List[BC] = [],
-                 u_bc_list: List[BC] = []
+                 u_bc_list: List[BC] = [],
+                 theta: float = 0
                  ) -> None:
         """
         Défini le maillage. Reset tout les attributs qui dépends du maillage.
@@ -187,11 +188,11 @@ class Solver_FVM:
         self.calc_p_source()
         # TODO: add convergence criteria
         iter = 0;
-        u_res = v_res = 100
+        u_res = v_res = 100 * res_max
         while (iter < iter_max):
             self.calc_flux()
             u_new = self.solve_momentum()
-            if iter > 1:
+            if iter >= 1:
                 u_res, v_res = self.residual()
                 print(f"i: {iter-1}\t\tu residual: \t{u_res}\t\tv_residual: \t{v_res}")
 
@@ -424,7 +425,7 @@ class Solver_FVM:
             self.calc_gradp()
         return self.gradp
 
-    def calc_gradp(self) -> None:
+    def calc_grad(self, field: np.ndarray, bc_list) -> np.ndarray:
         """
         Calcul le gradient à chaque centre de cellule
 
@@ -441,18 +442,18 @@ class Solver_FVM:
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             # deal with boundary faces:
             if idx_f < self.mesh.number_of_boundary_faces:
-                press_bc = self.p_bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
+                bc = bc_list[self.mesh.get_boundary_face_to_tag(idx_f)]
                 edge_nodes = self.mesh.get_face_to_nodes(idx_f)
                 xy_edge = (np.array(self.mesh.get_node_to_xycoord(edge_nodes[0])) +
                     np.array(self.mesh.get_node_to_xycoord(edge_nodes[1]))) / 2
                 dxy = self.centres[idx_g] - xy_edge
-                if press_bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
-                    if press_bc.type is BCType.DIRICHLET_FUNC:
-                        press_bc_val = press_bc.val(*self.right_centres[idx_f])
+                if bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
+                    if bc.type is BCType.DIRICHLET_FUNC:
+                        bc_val = bc.val(*self.right_centres[idx_f])
                     else:
-                        press_bc_val = press_bc.val
-                    scalar_diff = self.p[idx_g] - press_bc_val
-                elif press_bc.type is BCType.NEUMANN:
+                        bc_val = bc.val
+                    scalar_diff = field[idx_g] - bc_val
+                elif bc.type is BCType.NEUMANN:
                     # calculate edge normal
                     edge_vec = (np.array(self.mesh.get_node_to_xycoord(edge_nodes[1])) -
                         np.array(self.mesh.get_node_to_xycoord(edge_nodes[0])))
@@ -462,10 +463,10 @@ class Solver_FVM:
                     dxy = np.dot(dxy, normal) * normal
 
                     # calc scalar diff
-                    scalar_diff = np.dot(self.centres[idx_g] - xy_edge, normal) * press_bc.val
+                    scalar_diff = np.dot(self.centres[idx_g] - xy_edge, normal) * bc.val
             else:
                 dxy = self.centres[idx_g] - self.centres[idx_d]
-                scalar_diff = self.p[idx_g] - self.p[idx_d]
+                scalar_diff = field[idx_g] - field[idx_d]
             a_ls = np.outer(dxy, dxy)
             b[idx_g] += scalar_diff * dxy
             ata[idx_g] += a_ls
@@ -474,11 +475,25 @@ class Solver_FVM:
                 b[idx_d] += scalar_diff * dxy
 
         # solve each element
-        gradp = np.zeros([self.mesh.number_of_elements, 2])
+        grad = np.zeros([self.mesh.number_of_elements, 2])
         for i in range(self.mesh.number_of_elements):
-            gradp[i] = np.linalg.solve(ata[i], b[i])
+            grad[i] = np.linalg.solve(ata[i], b[i])
 
-        self.gradp = gradp
+        return grad
+
+    def calc_gradp(self) -> None:
+        """
+        Calcul le gradient à chaque centre de cellule
+
+        Paramètres
+        ----------
+        None
+
+        Retourne
+        --------
+        None
+        """
+        self.gradp = self.calc_grad(self.p, self.p_bc_list)
 
     def to_vtk(self, filename: str) -> None:
         """
