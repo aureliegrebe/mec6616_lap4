@@ -173,7 +173,6 @@ class Solver_FVM:
         None
         """
         self.calculate_areas()
-        areas = self.areas
         self.centres = np.zeros([self.mesh.number_of_elements, 2])
         for i in range(self.mesh.number_of_elements):
             nodes = self.mesh.get_element_to_nodes(i)
@@ -215,9 +214,6 @@ class Solver_FVM:
             iter += 1
 
     def residual(self):
-        Au = self.Au
-        u_old = self.u_old
-        bu_old = self.bu_old
         u_residual = np.linalg.norm(np.matmul(self.Au, self.u_old[:,0]) - self.bu_old)
         v_residual = np.linalg.norm(np.matmul(self.Av, self.u_old[:,1]) - self.bv_old)
         return u_residual, v_residual
