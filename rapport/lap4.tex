@@ -1,0 +1,75 @@
+\documentclass[12pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{datetime}
+\usepackage{subcaption}
+\usepackage[letterpaper, margin=1.9cm]{geometry}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{siunitx}
+\sisetup{output-decimal-marker = {,}}
+\graphicspath{ {../figures} }
+\usepackage{derivative}
+\usepackage{booktabs}
+\usepackage[flushleft]{threeparttable}
+\usepackage{amsmath}
+\usepackage{parskip}
+
+\usepackage{csquotes}
+\usepackage[
+backend=biber,
+style=ieee,
+%style=verbose,
+citestyle=ieee,
+%sorting=nyt,
+%url=false
+]{biblatex}
+\bibliography{references}
+
+\title{MEC6616 --- LAP4}
+
+
+\author{Aurélie Grebe\\Noémie Herbinière}
+\newdate{duedate}{19}{10}{2026}
+\date{\displaydate{duedate}}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Dans la présente œuvre, nous proposons une résolution d'un écoulement de Couette en 2D par volumes finis. Après une brève explication de la méthode de résolution, nous analyserons les résultats à l'aide de différents maillages pour un cas de Couette classique et un cas de Couette tourné.
+
+\section{Méthodologie}
+
+Les équations régissant un écoulement de Couette 2D sont les suivantes:
+
+\begin{equation} 
+\frac{\partial {(\rho u u)}}{\partial x} + \frac{\partial {(\rho v u)}}{\partial y} - \mu \left(\frac{\partial^2 u}{\partial^2 x} + \frac{\partial^2 u}{\partial^2 y} \right) = - \frac{\partial P}{\partial x}
+\label{eq:pde_u}
+\end{equation}
+
+\begin{equation} 
+\frac{\partial {(\rho u v)}}{\partial x} + \frac{\partial {(\rho v v)}}{\partial y} - \mu \left(\frac{\partial^2 v}{\partial^2 x} + \frac{\partial^2 v}{\partial^2 y} \right) = - \frac{\partial P}{\partial y}
+\label{eq:pde_v}
+\end{equation}
+
+Les équations sont exprimées en forme matricielle par: $A_u u = B_u$ et $A_v v = B_v$
+
+Avec $A_u$ et $A_v$ contenant les coefficients de diffusion et convection, $u$ et $v$ les champs que l'on souhaite résoudre et $B_u$ et $B_v$ contenant les termes de source (ici gradient de pression) et de cross-diffusion.
+
+\subsection{Méthode itérative}
+
+Afin de linéariser l'équation, on définit:
+$F_{x,i} = \rho u_i$ $F_{y,i} = \rho v_i$ tels des flux que l'on recalcule à chaque nouvelle itération à l'aide des u et v obtenus à l'itération précédente.
+
+\subsection{Maillages}
+
+
+
+
+
+\printbibliography[]
+	
+
+\end{document}
