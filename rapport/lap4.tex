@@ -61,7 +61,42 @@ Avec $A_u$ et $A_v$ contenant les coefficients de diffusion et convection, $u$ e
 \subsection{Méthode itérative}
 
 Afin de linéariser l'équation, on définit:
-$F_{x,i} = \rho u_i$ $F_{y,i} = \rho v_i$ tels des flux que l'on recalcule à chaque nouvelle itération à l'aide des u et v obtenus à l'itération précédente.
+$F_{x,i} = \rho u_i$ $F_{y,i} = \rho v_i$ tels des flux sur l'arrête i que l'on recalcule à chaque nouvelle itération à l'aide des u et v obtenus à l'itération précédente.
+
+Les vitesses étant obtenus au centre de chaque élément, on approxime les $F_i$ aux arrêtes avec la moyenne suivante:
+\begin{align}
+F_{x,i} &= \frac{F_{x,Tg} + F_{x,Td}}{2} \\
+F_{y,i} &= \frac{F_{y,Tg} + F_{y,Td}}{2} \\
+F_i &= (F_{x,i} \hat{n_{x,i}} + F_{y,i} \hat{n_{y,i}}) \Delta A_i
+\end{align}
+
+Les équations du moment deviennent ainsi, à l'itération $j+1$:
+\begin{align}
+\frac{\partial {(F_x^j u^{j+1})}}{\partial x} + \frac{\partial {(F_y^j u^{j+1})}}{\partial y} - \mu \left(\frac{\partial^2 u^{j+1}}{\partial^2 x} + \frac{\partial^2 u^{j+1}}{\partial^2 y} \right) &= - \frac{\partial P}{\partial x} \\
+\frac{\partial {(F_x^j v^{j+1})}}{\partial x} + \frac{\partial {(F_y^j v^{j+1})}}{\partial y} - \mu \left(\frac{\partial^2 v^{j+1}}{\partial^2 x} + \frac{\partial^2 v^{j+1}}{\partial^2 y} \right) &= - \frac{\partial P}{\partial y}
+\end{align}
+
+Pour un élément P, les termes sources sont $SGF_x = - \left(\frac{\partial P}{\partial x}\right)_P \Delta V_p$ et $SGF_y = - \left(\frac{\partial P}{\partial y}\right)_P \Delta V_p$.
+
+On définit les conditions initiales pour $i=0$: $u^0=f(x,y)$ et $v^0=g(x,y)$; $F_x^0 = \rho u^0$ et $F_y^0 = \rho v^0$.
+
+Ainsi il ne reste plus qu'à résoudre les deux équations à l'aide du solveur convection-diffusion développé dans le TPP2.
+
+Afin de stabiliser le système, on applique une sous-relaxation:
+\begin{align}
+u^{j+1} &= \alpha u_P + (1-\alpha)u^j \\
+v^{j+1} &= \alpha v_P + (1-\alpha)v^j
+\end{align}
+
+Où: 
+$0.5<\alpha<1$, $u_P$ et $v_p$ sont les solutions respectives de $A_u^j u_P = B_u$ et $A_v^j v_P = B_v$, $u^j$ et $v^j$ sont les solutions de l'itération précédente, et $u^{j+1}$ et $v^{j+1}$ sont les solutions qui seront utilisées pour calculer les flux de la prochaine itération.
+
+Le processus itératif continue jusqu'à la convergence de la solution. La convergence est mesurée en comparant la norme des résidus, tel que présenté ci-dessous:
+\begin{align}
+|A_u^{j+1} u^{j+1} - B_u| = |R_u^{j+1}| \\
+|A_v^{j+1} v^{j+1} - B_v| = |R_v^{j+1}|
+\end{align}
+
 
 \subsection{Maillages}
 
