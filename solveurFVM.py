@@ -233,6 +233,8 @@ class Solver_FVM:
                         u_bc_val = u_bc.val(*self.right_centres[idx_f])
                     else:
                         u_bc_val = u_bc.val
+                elif u_bc.type is BCType.NEUMANN:
+                    u_bc_val = self.u[idx_g, 0] + u_bc.val * self.p_nksi[idx_f] * self.d_ksi[idx_f]
                 else:
                     u_bc_val = self.u[idx_g, 0]
                 if v_bc.type in {BCType.DIRICHLET, BCType.DIRICHLET_FUNC}:
@@ -240,14 +242,15 @@ class Solver_FVM:
                         v_bc_val = v_bc.val(*self.right_centres[idx_f])
                     else:
                         v_bc_val = v_bc.val
+                elif v_bc.type is BCType.NEUMANN:
+                    v_bc_val = self.u[idx_g, 1] + v_bc.val * self.p_nksi[idx_f] * self.d_ksi[idx_f]
                 else:
                     v_bc_val = self.u[idx_g, 1]
                 self.face_velocity[idx_f, 0] = u_bc_val 
                 self.face_velocity[idx_f, 1] = v_bc_val 
             else:
-                self.face_velocity[idx_f] = (self.u[idx_g] + self.u[idx_d])
+                self.face_velocity[idx_f] = (self.u[idx_g] + self.u[idx_d]) / 2
         self.face_fluxes = self.density * np.sum(self.normal * self.face_velocity, axis=1) * self.face_size
-
 
 
     def solve_momentum(self):
@@ -312,6 +315,9 @@ class Solver_FVM:
                     B[idx_g] += cross_diff[idx_f]
                 elif u_bc.type is BCType.NEUMANN:
                     B[idx_g] += self.viscosity * self.face_size[idx_f] * u_bc.val
+                    # B[idx_g] -= diff_cnsts[idx_f] * u_bc.val
+                    # if first_iter:
+                    #     A[idx_g,idx_g] += diff_cnsts[idx_f]
             # Coefficients pour les cellules intérieurs    
             else:
                 if first_iter: # Si on est à la première itération, on caclule A et pose grad(phi) = 0
@@ -337,15 +343,15 @@ class Solver_FVM:
                     if first_iter: # Si on est à la première itération, on caclule A
                         A[idx_g,idx_g] += face_fluxes[idx_f] / 2
                 elif u_bc.type is BCType.NEUMANN:
-                    B[idx_g] += face_fluxes[idx_f] * u_bc.val * \
-                        self.p_nksi[idx_f] * self.d_ksi[idx_f] / 2. # TODO: à checker
+                    B[idx_g] -= face_fluxes[idx_f] * u_bc.val * \
+                        self.p_nksi[idx_f] * self.d_ksi[idx_f] # TODO: à checker
                     if first_iter: # Si on est à la première itération, on caclule A
-                        A[idx_g,idx_g] += face_fluxes[idx_f] / 2. # TODO: ou juste F_i ??
+                        A[idx_g,idx_g] += face_fluxes[idx_f] # TODO: ou juste F_i ??
             # Coefficients pour les cellules intérieurs    
             else:
                 if first_iter: # Si on est à la première itération, on caclule A
                     A[idx_g,idx_g] += face_fluxes[idx_f] / 2
-                    A[idx_d,idx_d] += - face_fluxes[idx_f] / 2
+                    A[idx_d,idx_d] += -face_fluxes[idx_f] / 2
                     A[idx_g,idx_d] += face_fluxes[idx_f] / 2
                     A[idx_d,idx_g] += -face_fluxes[idx_f] / 2
 

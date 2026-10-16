@@ -27,6 +27,9 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
 
     plotter = MeshPlotter()
 
+    # Solution exacte
+    analytical_sol = lambda y: y * (1 + p_fac * (1 - y))
+
     p_func = lambda x, y: -2 * p_fac * (x* np.cos(theta) + y * np.sin(theta))
 
     u_bc_list = [
@@ -43,8 +46,11 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
         BC(BCType.DIRICHLET_FUNC, p_func),
     ]
 
+    vel_func = lambda x, y: (analytical_sol(y), 0)
+
     solver = Solver_FVM(mesh_obj, 1, 1, p_bc_list, u_bc_list,
-                        pressure_func=p_func, alpha=0.7, theta = theta)
+                        pressure_func=p_func, velocity_func=vel_func,
+                        alpha=0.5, theta = theta)
 
     if quad:
         meshstr = "_quad"
@@ -59,8 +65,6 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     if cross_diff:
         solver.cross_diff_iter = 5
 
-    # Solution exacte
-    analytical_sol = lambda y: y * (1 + p_fac * (1 - y))
 
     # plotter.plot_mesh(mesh_obj, label_faces=True)
     exact_y = np.linspace(0, 1, 100)
@@ -73,7 +77,7 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     turned_y = (-solver.centres[:,0]*np.sin(theta) + solver.centres[:,1]*np.cos(theta) )
     start_slice = (turned_x < 0.05 )
     mid_slice = (turned_x > 0.45 ) & (turned_x < 0.55)
-    end_slice = (turned_x > 0.98 )
+    end_slice = (turned_x > 0.95 )
     turned_u = solver.u[:,0] * np.cos(theta) + solver.u[:,1] * np.sin(theta)
     turned_v = -solver.u[:,0] * np.sin(theta) + solver.u[:,1] * np.cos(theta)
     plt.figure()
@@ -123,7 +127,7 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     plt.savefig("./figures/couette_err" + meshstr + cdstr + thetastr + ".pdf")
 
     p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(h_list[-1]/h_list[-2]))
-    print(meshstr + cdstr + thetastr + f"ordre observé: {p:.5f}")
+    print(meshstr + cdstr + thetastr + f" ordre observé: {p:.5f}")
 
 
 
@@ -134,7 +138,8 @@ def main():
     # couette(-3,0.5)
     # couette(0)
     # couette(1)
-    couette(-3)
+    # couette(-3)
+    couette(-3, quad=False, cross_diff=True)
     plt.show()
 
 if __name__ == "__main__":
