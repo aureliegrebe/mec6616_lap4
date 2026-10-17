@@ -73,6 +73,8 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     plt.figure()
     plt.quiver(solver.centres[:,0], solver.centres[:,1],
                    solver.u[:,0], solver.u[:,1])
+    plt.savefig("./figures/couette_vec" + meshstr + cdstr + thetastr + ".pdf")
+    
     turned_x = (solver.centres[:,0]*np.cos(theta) + solver.centres[:,1]*np.sin(theta) )
     turned_y = (-solver.centres[:,0]*np.sin(theta) + solver.centres[:,1]*np.cos(theta) )
     start_slice = (turned_x < 0.05 )
@@ -86,6 +88,7 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     plt.plot(turned_y[mid_slice], turned_u[mid_slice], "*", label=f"milieu")
     plt.plot(turned_y[end_slice], turned_u[end_slice], "x", label=f"fin")
     plt.legend()
+    plt.savefig("./figures/couette_slice" + meshstr + cdstr + thetastr + ".pdf")
 
 
     h_list = []
@@ -135,11 +138,11 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
 def main():
     # couette(-3, quad=False, cross_diff=True)
     # couette(-3,0)
-    # couette(-3,0.5)
+    couette(-3,0.5)
     # couette(0)
     # couette(1)
     # couette(-3)
-    couette(-3, quad=False, cross_diff=True)
+    # couette(-3, quad=False, cross_diff=True)
     plt.show()
 
 if __name__ == "__main__":
