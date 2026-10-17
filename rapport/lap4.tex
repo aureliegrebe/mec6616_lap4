@@ -98,11 +98,33 @@ Le processus itératif continue jusqu'à la convergence de la solution. La conve
 \end{align}
 
 
-\subsection{Maillages}
+\subsection{Maillages et conditions limites}
+
+Les maillages utilisés sont présentés en figure XXX, de taille 1x1, après avoir étudié la convergence de la solution, la taille d'élément ayant été choisie est de XXX. 
+
+Les conditions aux frontières pour les vitesses sont: Neumann nul sur les faces Est et Ouest, Dirichlet nul sur la face Sud (paroi fixe, no slip wall) et Dirichlet $u = U$ où $U$ est une vitesse constante appliquée sur la face Nord.
 
 
+\section{Résultats}
 
 
+\subsection{Couette classique}
+
+On pose:
+$\frac{\partial P}{\partial x} = -2P$ et $\frac{\partial P}{\partial y} = 0$. Ainsi, $P(x) = -2Px$.
+
+La solution analytique correspondante est: $u = y*(1-P*(1-y))$ et $v=0$.
+
+En faisant varier le paramètre $P = [0, 1, -3]$, on obtient les résultats suivants.
+
+
+\subsection{Couette incliné}
+
+Pour le cas de couette incliné, il suffit d'introduire une matrice de rotation R telle que présentée dans l'énoncé et de remplacer les coordonnées du maillage par celles multipliées par la matrice R.
+
+La fonction P devient: $P(x,y) = -2P(x cos(\theta) + y sin(\theta))$ et la solution analytique (change t'elle ????).
+
+On fait encore une fois varier le paramètre P et on obtient les figures suivantes.
 
 \printbibliography[]
 	
