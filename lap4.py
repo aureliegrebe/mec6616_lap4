@@ -30,13 +30,13 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     # Solution exacte
     analytical_sol = lambda y: y * (1 + p_fac * (1 - y))
 
-    p_func = lambda x, y: -2 * p_fac * (x* np.cos(theta) + y * np.sin(theta))
+    p_func = lambda x, y: -2 * p_fac * (x * np.cos(theta) + y * np.sin(theta))
 
     u_bc_list = [
         [BC(BCType.NEUMANN, 0), BC(BCType.NEUMANN, 0)],
         [BC(BCType.DIRICHLET, 0), BC(BCType.DIRICHLET, 0)],
         [BC(BCType.NEUMANN, 0), BC(BCType.NEUMANN, 0)],
-        [BC(BCType.DIRICHLET, U*np.cos(theta)), BC(BCType.DIRICHLET,U*np.sin(theta))],
+        [BC(BCType.DIRICHLET, U * np.cos(theta)), BC(BCType.DIRICHLET,U*np.sin(theta))],
     ]
 
     p_bc_list = [
@@ -61,6 +61,7 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     else:
         cdstr = "_nocd"
     thetastr = f"_theta_{theta}"
+    pstr = f"_P_{p_fac}"
 
     if cross_diff:
         solver.cross_diff_iter = 5
@@ -73,7 +74,7 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     plt.figure()
     plt.quiver(solver.centres[:,0], solver.centres[:,1],
                    solver.u[:,0], solver.u[:,1])
-    plt.savefig("./figures/couette_vec" + meshstr + cdstr + thetastr + ".pdf")
+    plt.savefig("./figures/couette_vec" + meshstr + cdstr + thetastr + pstr + ".pdf")
     
     turned_x = (solver.centres[:,0]*np.cos(theta) + solver.centres[:,1]*np.sin(theta) )
     turned_y = (-solver.centres[:,0]*np.sin(theta) + solver.centres[:,1]*np.cos(theta) )
@@ -88,7 +89,7 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     plt.plot(turned_y[mid_slice], turned_u[mid_slice], "*", label=f"milieu")
     plt.plot(turned_y[end_slice], turned_u[end_slice], "x", label=f"fin")
     plt.legend()
-    plt.savefig("./figures/couette_slice" + meshstr + cdstr + thetastr + ".pdf")
+    plt.savefig("./figures/couette_slice" + meshstr + cdstr + thetastr + pstr + ".pdf")
 
 
     h_list = []
@@ -127,7 +128,7 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
     plt.yscale("log")
     plt.xscale("log")
     ax = plt.gca()
-    plt.savefig("./figures/couette_err" + meshstr + cdstr + thetastr + ".pdf")
+    plt.savefig("./figures/couette_err" + meshstr + cdstr + thetastr + pstr + ".pdf")
 
     p = float(np.log(epsilon2[-1]/epsilon2[-2])/np.log(h_list[-1]/h_list[-2]))
     print(meshstr + cdstr + thetastr + f" ordre observé: {p:.5f}")
@@ -136,12 +137,18 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
 
 
 def main():
-    # couette(-3, quad=False, cross_diff=True)
-    # couette(-3,0)
-    couette(-3,0.5)
     # couette(0)
     # couette(1)
     # couette(-3)
+    # couette(0, quad=False, cross_diff=True)
+    # couette(1, quad=False, cross_diff=True)
+    # couette(-3, quad=False, cross_diff=True)
+    # couette(0, theta=np.pi/6)
+    # couette(1, theta=np.pi/6)
+    # couette(-3, theta=np.pi/6)
+    couette(0, theta=np.pi/6, quad=False, cross_diff=True)
+    couette(1, theta=np.pi/6, quad=False, cross_diff=True)
+    couette(-3, theta=np.pi/6, quad=False, cross_diff=True)
     # couette(-3, quad=False, cross_diff=True)
     plt.show()
 
