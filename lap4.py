@@ -135,6 +135,20 @@ def couette(p_fac, theta = 0, quad=True, cross_diff=False):
 
 
 
+def print_maillage(quad=True):
+    plotter = MeshPlotter()
+
+    mesher = MeshGenerator()
+    # Générer un mesh 
+    if quad: # Maillage quadratique structuré
+        mesh_parameters = {'mesh_type': 'QUAD',
+                   'Nx': N, 'Ny': N                  
+                   }
+    else: # Maillage triangulaire non-structuré
+        mesh_parameters = {'mesh_type': 'TRI', 'lc': 1/N
+                   }
+    mesh_obj = mesher.rectangle([0,1,0,1], mesh_parameters)
+    plotter.plot_mesh(mesh_obj)
 
 def main():
     # couette(0)
@@ -146,10 +160,12 @@ def main():
     # couette(0, theta=np.pi/6)
     # couette(1, theta=np.pi/6)
     # couette(-3, theta=np.pi/6)
-    couette(0, theta=np.pi/6, quad=False, cross_diff=True)
-    couette(1, theta=np.pi/6, quad=False, cross_diff=True)
-    couette(-3, theta=np.pi/6, quad=False, cross_diff=True)
+    # couette(0, theta=np.pi/6, quad=False, cross_diff=True)
+    # couette(1, theta=np.pi/6, quad=False, cross_diff=True)
+    # couette(-3, theta=np.pi/6, quad=False, cross_diff=True)
     # couette(-3, quad=False, cross_diff=True)
+    print_maillage(quad=False)
+    plt.plot([0,1],[0,1])
     plt.show()
 
 if __name__ == "__main__":
