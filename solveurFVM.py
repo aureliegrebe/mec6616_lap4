@@ -11,7 +11,6 @@ from mesh.meshConnectivity import MeshConnectivity
 from mesh.meshGenerator import MeshGenerator
 from mesh.meshPlotter import MeshPlotter
 
-# TODO: Add source term
 
 class BCType(Enum):
     DIRICHLET = 1
@@ -54,6 +53,19 @@ class Solver_FVM:
         self.set_mesh(mesh, p_bc_list, u_bc_list)
 
     def get_new_xycoord(self,i):
+        """
+        Retourne la position (x,y) d'un nœud dans un repère tourné
+
+        Paramètres
+        ----------
+        i: int
+            Indice du nœud
+
+        Retourne
+        --------
+        (float, float)
+            Coordonnés du nœud i dans le repère tourné.
+        """
         R = np.array([[np.cos(self.theta), -np.sin(self.theta)],
                       [np.sin(self.theta),  np.cos(self.theta)]])
         coord = np.array(self.mesh.get_node_to_xycoord(i))
@@ -190,12 +202,29 @@ class Solver_FVM:
             self.centres[i, 1] = c_y / self.areas[i] / 6.
 
     def solve(self, iter_max=100, res_max=1e-3):
+        """
+        Boucle externe pour résoudre les équations avec FVM
+
+        Résout les equations de quantité de mouvement et recalcul les flux
+        jusqu'à convergence où atteint du nombre d'itérations maximaux.
+
+        Paramètres
+        ----------
+        iter_max: int
+             Nombre maximale d'itérations dans la boucle globale.
+        res_max: float
+            Valeur du résidule sur la vitesse qui fait office de critère de
+            convergence
+
+        Retourne
+        --------
+        None
+        """
         nb_elem = self.mesh.number_of_elements
         self.bu = np.zeros(nb_elem) # On ré-initialise B à chaque itération
         self.bv = np.zeros(nb_elem) # On ré-initialise B à chaque itération
         
         self.calc_p_source()
-        # TODO: add convergence criteria
         iter = 0;
         u_res = v_res = 100 * res_max
         while (iter < iter_max):
@@ -214,15 +243,34 @@ class Solver_FVM:
             iter += 1
 
     def residual(self):
+        """
+        Calcule les résiduels de la vitesse
+
+
+        Paramètres
+        ----------
+        None
+
+        Retourne
+        --------
+        (float, float)
+            Résiduels de u et v
+        """
         u_residual = np.linalg.norm(np.matmul(self.Au, self.u_old[:,0]) - self.bu_old)
         v_residual = np.linalg.norm(np.matmul(self.Av, self.u_old[:,1]) - self.bv_old)
         return u_residual, v_residual
 
 
     def calc_p_source(self):
+        """
+        Calcule la terme source dû gradient de pression
+        """
         self.sgp = (self.get_gradp().T * self.areas).T
 
     def calc_flux(self):
+        """
+        Calcule le flux à chaque face
+        """
         self.face_velocity = np.zeros([self.mesh.number_of_faces, 2])
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             if idx_f < self.mesh.number_of_boundary_faces:
@@ -254,6 +302,18 @@ class Solver_FVM:
 
 
     def solve_momentum(self):
+        """
+        Résoudre les équations de momentum
+
+        Paramètres
+        ----------
+        None
+
+        Retourne
+        --------
+        np.array
+            vecteur de dimension (n,2) avec les vitesses nouvellement calculées
+        """
         first_iter=True
 
         u = v = None
@@ -286,6 +346,27 @@ class Solver_FVM:
         return np.stack([u, v], axis=-1)
 
     def diff_coeff(self, A, B, first_iter: bool, dim: int, u=None) -> None:
+        """
+        Calcul la contribution de la diffusion à l'équation de la quantité de
+        mouvement.
+
+        Paramètres
+        ----------
+        A: np.array
+            Matrice du côté gauche de l'équation. Entrée et sortie
+        B: np.array
+            Vecteur du côté droite de l'équation. Entrée et sortie
+        first_iter: bool
+            Vrai si prémière itération dans le calcul du diffusion croisé.
+        dim: int
+            Dimension spatiale traité. dim = 0 -> u, dim = 1 -> v
+        u: np.array
+            Champ de vitesse pour calculer le gradient lors du cross diffusion
+
+        Retourne
+        --------
+        None
+        """
         diff_cnsts = self.viscosity/self.p_nksi*self.face_size/self.d_ksi
         if u is not None:
             grad_u = self.calc_grad(u, [pair[dim] for pair in self.u_bc_list])
@@ -329,6 +410,25 @@ class Solver_FVM:
                 B[idx_d] += -cross_diff[idx_f]
 
     def conv_coeff(self, A, B, first_iter:bool, dim:int) -> None:
+        """
+        Calcul la contribution de la convection à l'équation de la quantité de
+        mouvement.
+
+        Paramètres
+        ----------
+        A: np.array
+            Matrice du côté gauche de l'équation. Entrée et sortie
+        B: np.array
+            Vecteur du côté droite de l'équation. Entrée et sortie
+        first_iter: bool
+            Vrai si prémière itération dans le calcul du diffusion croisé.
+        dim: int
+            Dimension spatiale traité. dim = 0 -> u, dim = 1 -> v
+
+        Retourne
+        --------
+        None
+        """
         face_fluxes = self.face_fluxes
         for (idx_f, (idx_g, idx_d)) in enumerate(self.mesh.face_to_elements):
             # Coefficients pour les cellules aux frontières
@@ -344,10 +444,10 @@ class Solver_FVM:
                         A[idx_g,idx_g] += face_fluxes[idx_f] / 2
                 elif u_bc.type is BCType.NEUMANN:
                     B[idx_g] -= face_fluxes[idx_f] * u_bc.val * \
-                        self.p_nksi[idx_f] * self.d_ksi[idx_f] # TODO: à checker
+                        self.p_nksi[idx_f] * self.d_ksi[idx_f] 
                     if first_iter: # Si on est à la première itération, on caclule A
-                        A[idx_g,idx_g] += face_fluxes[idx_f] # TODO: ou juste F_i ??
-            # Coefficients pour les cellules intérieurs    
+                        A[idx_g,idx_g] += face_fluxes[idx_f] 
+            # Coefficients pour les cellules intérieurs
             else:
                 if first_iter: # Si on est à la première itération, on caclule A
                     A[idx_g,idx_g] += face_fluxes[idx_f] / 2
@@ -356,11 +456,41 @@ class Solver_FVM:
                     A[idx_d,idx_g] += -face_fluxes[idx_f] / 2
 
     def source_coeff(self, B:np.ndarray, dim:int):
+        """
+        Calcul la contribution de la terme source à l'équation de la quantité de
+        mouvement.
+
+        Paramètres
+        ----------
+        B: np.array
+            Vecteur du côté droite de l'équation. Entrée et sortie
+        dim: int
+            Dimension spatiale traité. dim = 0 -> u, dim = 1 -> v
+
+        Retourne
+        --------
+        None
+        """
         if self.source is None:
             return
         B += self.source[:,dim] * self.areas
 
     def pressure_coeff(self, B:np.ndarray, dim:int):
+        """
+        Calcul la contribution de la pression à l'équation de la quantité de
+        mouvement.
+
+        Paramètres
+        ----------
+        B: np.array
+            Vecteur du côté droite de l'équation. Entrée et sortie
+        dim: int
+            Dimension spatiale traité. dim = 0 -> u, dim = 1 -> v
+
+        Retourne
+        --------
+        None
+        """
         B -= self.sgp[:,dim]
 
     def set_velocity_field(self, 
