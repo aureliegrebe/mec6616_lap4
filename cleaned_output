@@ -1,0 +1,24 @@
+(noemie_test) [AG ?]10:29LAP4>>> python -m lap4
+_quad_nocd_theta_0 ordre observé: -0.00810
+_quad_nocd_theta_0 ordre observé: 2.00080
+_quad_nocd_theta_0 ordre observé: 2.00020
+(noemie_test) [AG !?]13:18LAP4>>> python -m lap4
+_tri_cd_theta_0 ordre observé: 2.85280
+_tri_cd_theta_0 ordre observé: 2.09405
+_tri_cd_theta_0 ordre observé: 2.01448
+(noemie_test) [AG !?]13:24LAP4>>> python -m lap4
+_quad_nocd_theta_0 ordre observé: -0.00810
+_quad_nocd_theta_0 ordre observé: 2.00080
+_quad_nocd_theta_0 ordre observé: 2.00020
+(noemie_test) [AG !?]13:28LAP4>>> python -m lap4
+_tri_cd_theta_0 ordre observé: 2.85280
+_tri_cd_theta_0 ordre observé: 2.09405
+_tri_cd_theta_0 ordre observé: 2.01448
+(noemie_test) [AG !?]13:41LAP4>>> python -m lap4
+_quad_nocd_theta_0.5235987755982988 ordre observé: -0.07403
+_quad_nocd_theta_0.5235987755982988 ordre observé: 1.99861
+_quad_nocd_theta_0.5235987755982988 ordre observé: 2.00029
+(noemie_test) [AG !?]13:44LAP4>>> python -m lap4
+_tri_cd_theta_0.5235987755982988 ordre observé: 2.83964
+_tri_cd_theta_0.5235987755982988 ordre observé: 2.09153
+_tri_cd_theta_0.5235987755982988 ordre observé: 2.01450
