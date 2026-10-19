@@ -118,111 +118,114 @@ La solution analytique correspondante est: $u = y*(1-P*(1-y))$ et $v=0$.
 En faisant varier le paramètre $P = [0, 1, -3]$, on obtient les résultats suivants.
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0_P_0.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0_P_0.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0_P_0.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette classique pour P = 0 en maillage quadrilatère}
+	\caption{Couette classique pour P = 0 en maillage quadrilatère}
+	\label{classique_p_0_quad}
 \end{figure}
 
+On observe en figure~\ref{classique_p_0_quad} que la convergence ne dépend que des erreurs de flottants car le résultat est linéaire.
+
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0_P_0.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0_P_0.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0_P_0.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette classique pour P = 0 en maillage triangulaire}
+	\caption{Couette classique pour P = 0 en maillage triangulaire}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0_P_1.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0_P_1.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0_P_1.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette classique pour P = 1 en maillage quadrilatère}
+	\caption{Couette classique pour P = 1 en maillage quadrilatère}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0_P_1.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0_P_1.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0_P_1.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette classique pour P = 1 en maillage triangulaire}
+	\caption{Couette classique pour P = 1 en maillage triangulaire}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0_P_-3.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0_P_-3.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0_P_-3.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette classique pour P = -3 en maillage quadrilatère}
+	\caption{Couette classique pour P = -3 en maillage quadrilatère}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0_P_-3.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0_P_-3.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0_P_-3.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette classique pour P = -3 en maillage triangulaire}
+	\caption{Couette classique pour P = -3 en maillage triangulaire}
 \end{figure}
 
 
@@ -235,111 +238,111 @@ On a choisi $\theta = 0.5 rad$.
 On fait encore une fois varier le paramètre P et on obtient les figures suivantes.
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0.5235987755982988_P_0.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0.5235987755982988_P_0.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0.5235987755982988_P_0.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette incliné pour P = 0 en maillage quadrilatère}
+	\caption{Couette incliné pour P = 0 en maillage quadrilatère}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0.5235987755982988_P_0.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0.5235987755982988_P_0.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0.5235987755982988_P_0.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette incliné pour P = 0 en maillage triangulaire}
+	\caption{Couette incliné pour P = 0 en maillage triangulaire}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0.5235987755982988_P_1.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0.5235987755982988_P_1.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0.5235987755982988_P_1.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette incliné pour P = 1 en maillage quadrilatère}
+	\caption{Couette incliné pour P = 1 en maillage quadrilatère}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0.5235987755982988_P_1.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0.5235987755982988_P_1.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0.5235987755982988_P_1.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette incliné pour P = 1 en maillage triangulaire}
+	\caption{Couette incliné pour P = 1 en maillage triangulaire}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0.5235987755982988_P_-3.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0.5235987755982988_P_-3.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0.5235987755982988_P_-3.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette incliné pour P = -3 en maillage quadrilatère}
+	\caption{Couette incliné pour P = -3 en maillage quadrilatère}
 \end{figure}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0.5235987755982988_P_-3.pdf}
 		\caption{Champ vectoriel de vitesses}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0.5235987755982988_P_-3.pdf}
 		\caption{Slices de la solution numérique vs solution analytique}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.48\textwidth}
+	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0.5235987755982988_P_-3.pdf}
 		\caption{Convergence}
 	\end{subfigure}
-	\label{Couette incliné pour P = -1 en maillage triangulaire}
+	\caption{Couette incliné pour P = -1 en maillage triangulaire}
 \end{figure}
 
 \printbibliography[]
