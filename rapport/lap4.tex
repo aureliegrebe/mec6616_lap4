@@ -100,10 +100,23 @@ Le processus itératif continue jusqu'à la convergence de la solution. La conve
 
 \subsection{Maillages et conditions limites}
 
-Les maillages utilisés sont présentés en figure XXX, de taille 1x1, après avoir étudié la convergence de la solution, le nombre d'éléments choisi est de 20. 
+Les maillages utilisés sont présentés en figure~\ref{mesh}, de taille 1x1, après avoir étudié la convergence de la solution, le nombre d'éléments choisi est de 20. 
 
 Les conditions aux frontières pour les vitesses sont: Neumann nul sur les faces Est et Ouest, Dirichlet nul sur la face Sud (paroi fixe, no slip wall) et Dirichlet $u = U$ où $U$ est une vitesse constante appliquée sur la face Nord.
 
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/maillage_quad.png}
+		\caption{Maillage quadrilatère}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/maillage_tri.png}
+		\caption{Maillage triangulaire}
+	\end{subfigure}
+	\caption{Maillages}
+	\label{mesh}
+\end{figure}
 
 \section{Résultats}
 
@@ -136,8 +149,6 @@ En faisant varier le paramètre $P = [0, 1, -3]$, on obtient les résultats suiv
 	\label{classique_p_0_quad}
 \end{figure}
 
-On observe en figure~\ref{classique_p_0_quad} que la convergence ne dépend que des erreurs de flottants car le résultat est linéaire.
-
 \begin{figure}
 	\begin{subfigure}[t]{0.3\textwidth}
 		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0_P_0.pdf}
@@ -154,6 +165,7 @@ On observe en figure~\ref{classique_p_0_quad} que la convergence ne dépend que 
 		\caption{Convergence}
 	\end{subfigure}
 	\caption{Couette classique pour P = 0 en maillage triangulaire}
+	\label{classique_p_0_tri}
 \end{figure}
 
 \begin{figure}
@@ -253,6 +265,7 @@ On fait encore une fois varier le paramètre P et on obtient les figures suivant
 		\caption{Convergence}
 	\end{subfigure}
 	\caption{Couette incliné pour P = 0 en maillage quadrilatère}
+	\label{incline_p_0_quad}
 \end{figure}
 
 \begin{figure}
@@ -271,6 +284,7 @@ On fait encore une fois varier le paramètre P et on obtient les figures suivant
 		\caption{Convergence}
 	\end{subfigure}
 	\caption{Couette incliné pour P = 0 en maillage triangulaire}
+	\label{incline_p_0_tri}
 \end{figure}
 
 \begin{figure}
@@ -344,6 +358,10 @@ On fait encore une fois varier le paramètre P et on obtient les figures suivant
 	\end{subfigure}
 	\caption{Couette incliné pour P = -1 en maillage triangulaire}
 \end{figure}
+
+On observe en figures~\ref{classique_p_0_quad} et~\ref{incline_p_0_quad} que la convergence ne dépend que des erreurs de flottants car le résultat est linéaire. 
+
+Aux figures~\ref{classique_p_0_tri} et~\ref{incline_p_0_tri} que l'ordre de convergence XXX.
 
 \printbibliography[]
 	
