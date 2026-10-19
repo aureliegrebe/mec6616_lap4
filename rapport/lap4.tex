@@ -67,7 +67,7 @@ Les vitesses étant obtenus au centre de chaque élément, on approxime les $F_i
 \begin{align}
 F_{x,i} &= \frac{F_{x,Tg} + F_{x,Td}}{2} \\
 F_{y,i} &= \frac{F_{y,Tg} + F_{y,Td}}{2} \\
-F_i &= (F_{x,i} \hat{n_{x,i}} + F_{y,i} \hat{n_{y,i}}) \Delta A_i
+F_i &= (F_{x,i} \hat{n}_{x,i} + F_{y,i} \hat{n}_{y,i}) \Delta A_i
 \end{align}
 
 Les équations du moment deviennent ainsi, à l'itération $j+1$:
@@ -100,10 +100,23 @@ Le processus itératif continue jusqu'à la convergence de la solution. La conve
 
 \subsection{Maillages et conditions limites}
 
-Les maillages utilisés sont présentés en figure XXX, de taille 1x1, après avoir étudié la convergence de la solution, la taille d'élément ayant été choisie est de XXX. 
+Les maillages utilisés sont présentés en figure~\ref{mesh}, de taille 1x1, après avoir étudié la convergence de la solution, le nombre d'éléments choisi est de 20. 
 
 Les conditions aux frontières pour les vitesses sont: Neumann nul sur les faces Est et Ouest, Dirichlet nul sur la face Sud (paroi fixe, no slip wall) et Dirichlet $u = U$ où $U$ est une vitesse constante appliquée sur la face Nord.
 
+\begin{figure}
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{../figures/maillage_quad.png}
+		\caption{Maillage quadrilatère}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\includegraphics[width=\textwidth]{../figures/maillage_tri.png}
+		\caption{Maillage triangulaire}
+	\end{subfigure}
+	\caption{Maillages}
+	\label{mesh}
+\end{figure}
 
 \section{Résultats}
 
@@ -115,18 +128,244 @@ $\frac{\partial P}{\partial x} = -2P$ et $\frac{\partial P}{\partial y} = 0$. Ai
 
 La solution analytique correspondante est: $u = y*(1-P*(1-y))$ et $v=0$.
 
-En faisant varier le paramètre $P = [0, 1, -3]$, on obtient les résultats suivants.
+En faisant varier le paramètre $P = [0, 1, -3]$, on obtient les résultats suivants (figures 2 à 7).
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0_P_0.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0_P_0.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0_P_0.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette classique pour P = 0 en maillage quadrilatère, ordre observé: -0.00810}
+	\label{classique_p_0_quad}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0_P_0.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0_P_0.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0_P_0.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette classique pour P = 0 en maillage triangulaire, ordre observé: 2.85280}
+	\label{classique_p_0_tri}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0_P_1.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0_P_1.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0_P_1.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette classique pour P = 1 en maillage quadrilatère, ordre observé: 2.00080}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0_P_1.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0_P_1.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0_P_1.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette classique pour P = 1 en maillage triangulaire, ordre observé: 2.09405}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0_P_-3.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0_P_-3.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0_P_-3.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette classique pour P = -3 en maillage quadrilatère, ordre observé: 2.00020}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0_P_-3.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0_P_-3.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0_P_-3.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette classique pour P = -3 en maillage triangulaire, ordre observé: 2.01448}
+\end{figure}
 
 
 \subsection{Couette incliné}
 
 Pour le cas de couette incliné, il suffit d'introduire une matrice de rotation R telle que présentée dans l'énoncé et de remplacer les coordonnées du maillage par celles multipliées par la matrice R.
 
-La fonction P devient: $P(x,y) = -2P(x cos(\theta) + y sin(\theta))$ et la solution analytique (change t'elle ????).
+On a choisi $\theta = 0.5 rad$.
 
-On fait encore une fois varier le paramètre P et on obtient les figures suivantes.
+On fait encore une fois varier le paramètre P et on obtient les figures suivantes (figures 8 à 13).
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0.5235987755982988_P_0.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0.5235987755982988_P_0.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0.5235987755982988_P_0.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette incliné pour P = 0 en maillage quadrilatère, ordre observé: -0.07403}
+	\label{incline_p_0_quad}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0.5235987755982988_P_0.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0.5235987755982988_P_0.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0.5235987755982988_P_0.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette incliné pour P = 0 en maillage triangulaire, ordre observé: 2.83964}
+	\label{incline_p_0_tri}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0.5235987755982988_P_1.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0.5235987755982988_P_1.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0.5235987755982988_P_1.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette incliné pour P = 1 en maillage quadrilatère, ordre observé: 1.99861}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0.5235987755982988_P_1.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0.5235987755982988_P_1.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0.5235987755982988_P_1.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette incliné pour P = 1 en maillage triangulaire, ordre observé: 2.09153}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_quad_nocd_theta_0.5235987755982988_P_-3.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_quad_nocd_theta_0.5235987755982988_P_-3.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_quad_nocd_theta_0.5235987755982988_P_-3.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette incliné pour P = -3 en maillage quadrilatère, ordre observé: 2.00029}
+\end{figure}
+
+\begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_vec_tri_cd_theta_0.5235987755982988_P_-3.pdf}
+		\caption{Champ vectoriel de vitesses}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_slice_tri_cd_theta_0.5235987755982988_P_-3.pdf}
+		\caption{Slices de la solution numérique vs solution analytique}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.3\textwidth}
+		\includegraphics[width=\textwidth]{../figures/couette_err_tri_cd_theta_0.5235987755982988_P_-3.pdf}
+		\caption{Convergence}
+	\end{subfigure}
+	\caption{Couette incliné pour P = -1 en maillage triangulaire, ordre observé: 2.01450}
+\end{figure}
+
+On observe en figures~\ref{classique_p_0_quad} et~\ref{incline_p_0_quad} que la convergence ne dépend que des erreurs de flottants car le résultat est linéaire. 
+
+Aux figures~\ref{classique_p_0_tri} et~\ref{incline_p_0_tri} que l'ordre de convergence ne correspond pas exactement à l'ordre de convergence attendu (2). Cependant, l'ordre étant calculé à l'aide du dernier segment, il n'est pas forcément représentatif de la courbe de convergence dans sa globalité qui elle tend vers 2.
+
+Les autres cas résultent en des solutions numériques qui correspondent bien aux résultats attendus ainsi qu'à la solution analytique et donnent un ordre de convergence autour de 2.
+
 
 \printbibliography[]
 	
-
 \end{document}
